@@ -3,12 +3,14 @@ use crate::container::ContainerManager;
 use crate::evolution::EvolutionManager;
 use crate::team::TeamManager;
 
+#[allow(dead_code)]
 pub struct CommandHandler {
     container_manager: ContainerManager,
     evolution_manager: EvolutionManager,
     team_manager: TeamManager,
 }
 
+#[allow(dead_code)]
 impl CommandHandler {
     pub fn new() -> Self {
         Self {

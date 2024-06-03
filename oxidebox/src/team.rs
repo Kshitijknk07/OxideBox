@@ -1,4 +1,4 @@
-use crate::container::{Container, ContainerManager};
+use crate::container::Container;
 use std::collections::HashMap;
 
 pub struct TeamManager {
@@ -6,12 +6,15 @@ pub struct TeamManager {
 }
 
 pub struct TeamStats {
+    #[allow(dead_code)]
     pub battles_won: u32,
+    #[allow(dead_code)]
     pub battles_lost: u32,
     pub total_exp: u32,
     pub average_level: f32,
 }
 
+#[allow(dead_code)]
 impl TeamManager {
     pub fn new() -> Self {
         TeamManager {
@@ -110,4 +113,9 @@ impl TeamManager {
         }
         stats
     }
+}
+
+#[allow(dead_code)]
+impl TeamStats {
+    // ... existing code ...
 }
