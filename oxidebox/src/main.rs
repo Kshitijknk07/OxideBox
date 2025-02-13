@@ -1,10 +1,12 @@
 mod cli;
+mod container;
 
 use clap::ArgMatches;
 
 fn main() {
     let matches = cli::build_cli().get_matches();
 
+    // Access the CLI arguments
     let horse = matches.get_one::<String>("horse").unwrap();
     let steed_id = matches.get_one::<String>("steed_id").unwrap();
 
