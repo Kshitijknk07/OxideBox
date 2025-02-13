@@ -1,13 +1,13 @@
-mod cgroups_integration;
+mod cli;
+
+use clap::ArgMatches;
 
 fn main() {
-    // Print RDR2-inspired welcome message
-    println!("░▒▓▓▓▒░  OXIDEBOX  ░▒▓▓▓▒░");
-    println!("    The Container Frontier\n");
-    println!("Welcome to OxideBox, partner. Your journey into the container frontier begins now...\n");
+    let matches = cli::build_cli().get_matches();
 
-    // Call the Cgroups integration function
-    if let Err(e) = cgroups_integration::create_cgroup() {
-        eprintln!("Failed to create cgroup: {}", e);
-    }
+    let horse = matches.get_one::<String>("horse").unwrap();
+    let steed_id = matches.get_one::<String>("steed_id").unwrap();
+
+    println!("Horse: {}", horse);
+    println!("Steed ID: {}", steed_id);
 }
