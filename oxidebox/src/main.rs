@@ -1,28 +1,21 @@
-// main.rs
-
 mod cli;
-mod container;
-
 use clap::Parser;
 use cli::{Cli, Commands};
-use container::ContainerManager;
 
 fn main() {
-    let mut container_manager = ContainerManager::new();
     let cli = Cli::parse();
-
     match cli.command {
         Commands::Summon { pokemon } => {
-            container_manager.summon(&pokemon);
+            println!("⚡ Summoning Pokémon: {}!", pokemon);
         }
         Commands::Recall { pokemon } => {
-            container_manager.recall(&pokemon);
-        }
-        Commands::Release { pokemon } => {
-            container_manager.release(&pokemon);
+            println!("🛑 Recalling Pokémon: {}!", pokemon);
         }
         Commands::Pokedex => {
-            container_manager.pokedex();
+            println!("📖 Fetching Pokédex...");
+        }
+        Commands::Release { pokemon } => {
+            println!("🌿 Releasing Pokémon: {} back into the wild!", pokemon);
         }
     }
 }
