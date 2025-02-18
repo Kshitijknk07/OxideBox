@@ -1,15 +1,21 @@
 mod cli;
-mod container;
-
-use clap::ArgMatches;
+use clap::Parser;
+use cli::{Cli, Commands};
 
 fn main() {
-    let matches = cli::build_cli().get_matches();
-
-    // Access the CLI arguments
-    let horse = matches.get_one::<String>("horse").unwrap();
-    let steed_id = matches.get_one::<String>("steed_id").unwrap();
-
-    println!("Horse: {}", horse);
-    println!("Steed ID: {}", steed_id);
+    let cli = Cli::parse();
+    match cli.command {
+        Commands::Summon { pokemon } => {
+            println!("⚡ Summoning Pokémon: {}!", pokemon);
+        }
+        Commands::Recall { pokemon } => {
+            println!("🛑 Recalling Pokémon: {}!", pokemon);
+        }
+        Commands::Pokedex => {
+            println!("📖 Fetching Pokédex...");
+        }
+        Commands::Release { pokemon } => {
+            println!("🌿 Releasing Pokémon: {} back into the wild!", pokemon);
+        }
+    }
 }

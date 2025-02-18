@@ -1,2 +1,25 @@
+# Rust build artifacts
 /target/
-/Cargo.lock
+/debug/
+/release/
+
+# Rust/Cargo specific files
+Cargo.lock
+**/*.rs.bk
+
+# Editor & OS-specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.DS_Store
+Thumbs.db
+
+# Logs & temporary files
+*.log
+*.tmp
+*.bak
+
+# Wails-specific (since we might use it later)
+wails-build/
+wailsjs/
