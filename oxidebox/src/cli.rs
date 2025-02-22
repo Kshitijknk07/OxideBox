@@ -14,4 +14,5 @@ pub enum Commands {
     Recall { pokemon: String },  // Stop a container
     Pokedex,                     // List active containers
     Release { pokemon: String }, // Remove a container
+    Battle { pokemon1: String, pokemon2: String }, // Battle Command
 }
