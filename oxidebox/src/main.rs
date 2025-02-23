@@ -60,27 +60,30 @@ fn main() {
             let p1 = containers.remove(&pokemon1);
             let p2 = containers.remove(&pokemon2);
 
-            match (p1, p2) {
-                (Some(mut p1), Some(mut p2)) => {
-                    // Start the battle
-                    Battle::start_battle(&mut p1, &mut p2);
+            // Check if both Pokémon exist
+            if p1.is_none() || p2.is_none() {
+                println!("⚠️ One or both Pokémon not found!");
 
-                    // Reinsert the Pokémon into the HashMap after the battle
+                // Reinsert the Pokémon if they were removed but not used in the battle
+                if let Some(p1) = p1 {
                     containers.insert(pokemon1, p1);
+                }
+                if let Some(p2) = p2 {
                     containers.insert(pokemon2, p2);
                 }
-                _ => {
-                    println!("⚠️ One or both Pokémon not found!");
-
-                    // Reinsert the Pokémon if they were removed but not used in the battle
-                    if let Some(p1) = p1 {
-                        containers.insert(pokemon1, p1);
-                    }
-                    if let Some(p2) = p2 {
-                        containers.insert(pokemon2, p2);
-                    }
-                }
+                return;
             }
+
+            // Unwrap the Pokémon since we've confirmed they exist
+            let mut p1 = p1.unwrap();
+            let mut p2 = p2.unwrap();
+
+            // Start the battle
+            Battle::start_battle(&mut p1, &mut p2);
+
+            // Reinsert the Pokémon into the HashMap after the battle
+            containers.insert(pokemon1, p1);
+            containers.insert(pokemon2, p2);
         }
     }
 }

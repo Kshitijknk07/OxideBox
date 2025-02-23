@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)] // Derive `Clone` for `Container`
+#[derive(Debug, Clone)]
 pub struct Container {
     pub name: String,
     pub status: String,
-    pub level: u32,
+    pub level: u32, 
     pub hp: i32,
     pub attack: u32,
     pub defense: u32,
