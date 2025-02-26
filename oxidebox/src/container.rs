@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use crate::battle::Battle;  
-use crate::moves::{Move, PokemonType, TypeEffectiveness};
+use crate::moves::{Move, PokemonType};
 use crate::database::Database;
 use rusqlite::Result;
+use crate::evolution::{Evolution, EvolutionManager};
 
 #[derive(Debug, Clone)]
 pub struct Container {
@@ -15,11 +16,13 @@ pub struct Container {
     pub speed: u32,
     pub pokemon_type: PokemonType,
     pub moves: Vec<Move>,
+    pub exp: u32,
+    pub exp_to_next_level: u32,
 }
 
 impl Container {
-    // Update the new method signature
     pub fn new(name: &str, level: u32, hp: i32, attack: u32, defense: u32, speed: u32, pokemon_type: PokemonType) -> Self {
+        let exp_to_next_level = Self::calculate_exp_to_next_level(level);
         Self {
             name: name.to_string(),
             level,
@@ -30,10 +33,58 @@ impl Container {
             pokemon_type,
             status: "Active".to_string(),
             moves: Vec::new(),
+            exp: 0,
+            exp_to_next_level,
         }
     }
 
-    // Fix the is_active method
+    fn calculate_exp_to_next_level(level: u32) -> u32 {
+        // Simple exponential growth formula
+        (level * level * 100) as u32
+    }
+
+    pub fn gain_exp(&mut self, amount: u32, evolution_manager: &EvolutionManager) {
+        self.exp += amount;
+        println!("✨ {} gained {} experience points!", self.name, amount);
+
+        while self.exp >= self.exp_to_next_level {
+            self.level_up(evolution_manager);
+        }
+    }
+
+    fn level_up(&mut self, evolution_manager: &EvolutionManager) {
+        self.level += 1;
+        self.exp -= self.exp_to_next_level;
+        self.exp_to_next_level = Self::calculate_exp_to_next_level(self.level);
+
+        // Increase stats
+        self.hp = (self.hp as f32 * 1.1) as i32;
+        self.attack = (self.attack as f32 * 1.1) as u32;
+        self.defense = (self.defense as f32 * 1.1) as u32;
+        self.speed = (self.speed as f32 * 1.1) as u32;
+
+        println!("🎉 {} reached level {}!", self.name, self.level);
+
+        // Check for evolution
+        if let Some(evolution) = evolution_manager.get_evolution(&self.name) {
+            if self.level >= evolution.level {
+                self.evolve(evolution);
+            }
+        }
+    }
+
+    fn evolve(&mut self, evolution: &Evolution) {
+        let old_name = self.name.clone();
+        self.name = evolution.to.clone();
+        
+        // Apply evolution stat multipliers
+        self.hp = (self.hp as f32 * evolution.stat_multipliers.hp) as i32;
+        self.attack = (self.attack as f32 * evolution.stat_multipliers.attack) as u32;
+        self.defense = (self.defense as f32 * evolution.stat_multipliers.defense) as u32;
+        self.speed = (self.speed as f32 * evolution.stat_multipliers.speed) as u32;
+
+        println!("⭐ Congratulations! {} evolved into {}!", old_name, self.name);
+    }
     pub fn is_active(&self) -> bool {
         self.hp > 0
     }
@@ -44,33 +95,6 @@ impl Container {
         } else {
             println!("⚠️ {} already knows 4 moves!", self.name);
         }
-    }
-    pub fn take_damage(&mut self, damage: i32) {
-        if damage >= self.hp {
-            self.hp = 0;
-            self.status = "Fainted".to_string();
-            println!("💀 {} has fainted!", self.name);
-        } else {
-            self.hp -= damage;
-            println!("🔥 {} took {} damage! HP: {}", self.name, damage, self.hp);
-        }
-    }
-    pub fn use_move(&mut self, move_index: usize, target: &mut Container) -> bool {
-        if move_index >= self.moves.len() {
-            println!("⚠️ Invalid move index!");
-            return false;
-        }
-
-        let battle_move = &self.moves[move_index];
-        let damage = self.calculate_damage(battle_move.power);
-        
-        println!("⚡ {} used {}!", self.name, battle_move.name);
-        target.take_damage(damage);
-        true
-    }
-
-    fn calculate_damage(&self, move_power: u32) -> i32 {
-        (self.attack as f32 * move_power as f32 / 50.0) as i32
     }
 }
 /// Manages a collection of `Container` instances and teams.
@@ -135,20 +159,18 @@ impl ContainerManager {
     pub fn get_containers_mut(&mut self) -> &mut HashMap<String, Container> {
         &mut self.containers
     }
-    pub fn battle(&mut self, pokemon1: &str, pokemon2: &str) -> bool {
+    pub fn battle(&mut self, pokemon1: &str, pokemon2: &str, evolution_manager: &EvolutionManager) -> bool {
         if pokemon1 == pokemon2 {
             println!("⚠️ A Pokémon cannot battle itself!");
             return false;
         }
 
-        // Take ownership of both Pokémon
         if let (Some(mut p1), Some(mut p2)) = (
             self.containers.remove(pokemon1),
             self.containers.remove(pokemon2)
         ) {
-            Battle::start_battle(&mut p1, &mut p2);
+            Battle::start_battle(&mut p1, &mut p2, evolution_manager);
             
-            // Return Pokémon to containers
             self.containers.insert(pokemon1.to_string(), p1);
             self.containers.insert(pokemon2.to_string(), p2);
             true

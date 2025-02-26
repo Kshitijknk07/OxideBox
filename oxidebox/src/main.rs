@@ -3,15 +3,18 @@ mod container;
 mod battle;
 mod moves;
 mod database;
+mod evolution;
 
 use clap::Parser;
 use cli::{Cli, Commands};
 use container::ContainerManager;
 use moves::PokemonType;  // Single import for PokemonType
+use evolution::EvolutionManager;
 
 fn main() {
     let cli = Cli::parse();
     let mut container_manager = ContainerManager::new();
+    let evolution_manager = EvolutionManager::new();
 
     // Initialize with some default Pokémon
     // Update Pokemon initialization
@@ -32,7 +35,7 @@ fn main() {
             container_manager.release(&pokemon);
         }
         Commands::Battle { pokemon1, pokemon2 } => {
-            container_manager.battle(&pokemon1, &pokemon2);
+            container_manager.battle(&pokemon1, &pokemon2, &evolution_manager);
         }
         Commands::Save { pokemon } => {
             if let Err(e) = container_manager.save_to_db(&pokemon) {

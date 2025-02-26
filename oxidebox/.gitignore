@@ -20,6 +20,12 @@ Thumbs.db
 *.tmp
 *.bak
 
+# Database files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
 # Wails-specific (since we might use it later)
 wails-build/
 wailsjs/

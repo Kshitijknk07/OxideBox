@@ -1,37 +1,51 @@
-use crate::container::Container;
 use rand::Rng;
+use crate::container::Container;
+use crate::evolution::EvolutionManager;
 
 pub struct Battle;
 
 impl Battle {
-    pub fn start_battle(pokemon1: &mut Container, pokemon2: &mut Container) {
-        println!("⚔️ Battle begins between {} and {}!", pokemon1.name, pokemon2.name);
+    pub fn calculate_exp_reward(opponent_level: u32) -> u32 {
+        // Base experience calculation formula
+        (opponent_level * 10) + 100
+    }
 
+    pub fn start_battle(pokemon1: &mut Container, pokemon2: &mut Container, evolution_manager: &EvolutionManager) {
+        println!("⚔️ Battle start: {} vs {}", pokemon1.name, pokemon2.name);
+        
+        let mut rng = rand::thread_rng();
+        
         while pokemon1.is_active() && pokemon2.is_active() {
-            Battle::turn(pokemon1, pokemon2);
+            // Pokemon 1's turn
+            if pokemon1.is_active() {
+                let move_index = rng.gen_range(0..pokemon1.moves.len());
+                Self::execute_move(pokemon1, pokemon2, move_index);
+            }
+
+            // Pokemon 2's turn
             if pokemon2.is_active() {
-                Battle::turn(pokemon2, pokemon1);
+                let move_index = rng.gen_range(0..pokemon2.moves.len());
+                Self::execute_move(pokemon2, pokemon1, move_index);
             }
         }
 
-        let winner = if pokemon1.is_active() { &pokemon1.name } else { &pokemon2.name };
-        println!("🏆 {} wins the battle!", winner);
+        // Award experience to the winner
+        if pokemon1.is_active() {
+            println!("🏆 {} wins!", pokemon1.name);
+            pokemon1.gain_exp(Self::calculate_exp_reward(pokemon2.level), evolution_manager);
+        } else {
+            println!("🏆 {} wins!", pokemon2.name);
+            pokemon2.gain_exp(Self::calculate_exp_reward(pokemon1.level), evolution_manager);
+        }
     }
 
-    fn turn(attacker: &mut Container, defender: &mut Container) {
-        println!("\n{}'s turn!", attacker.name);
-        println!("Available moves:");
-        for (i, move_) in attacker.moves.iter().enumerate() {
-            println!("{}. {} (PP: {}/{})", i + 1, move_.name, move_.pp, move_.max_pp);
+    fn execute_move(attacker: &mut Container, defender: &mut Container, move_index: usize) {
+        if let Some(battle_move) = attacker.moves.get(move_index) {
+            println!("💫 {} uses {}!", attacker.name, battle_move.name);
+            // Implement damage calculation and HP reduction here
+            let damage = battle_move.power;
+            defender.hp -= damage as i32;
+            println!("💥 {} takes {} damage!", defender.name, damage);
         }
-
-        let mut rng = rand::thread_rng();
-        let move_index = if !attacker.moves.is_empty() {
-            rng.gen_range(0..attacker.moves.len())
-        } else {
-            0 // Use default attack if no moves are available
-        };
-
-        attacker.use_move(move_index, defender);
     }
 }

@@ -11,7 +11,6 @@ impl Database {
     pub fn new() -> Result<Self> {
         let conn = Connection::open("pokemon.db")?;
         
-        // Create tables
         conn.execute(
             "CREATE TABLE IF NOT EXISTS pokemon (
                 id INTEGER PRIMARY KEY,
@@ -22,7 +21,9 @@ impl Database {
                 defense INTEGER,
                 speed INTEGER,
                 pokemon_type TEXT,
-                status TEXT
+                status TEXT,
+                exp INTEGER,
+                exp_to_next_level INTEGER
             )",
             [],
         )?;
@@ -45,12 +46,12 @@ impl Database {
         Ok(Database { conn })
     }
 
-    pub fn save_pokemon(&mut self, container: &Container) -> Result<()> { 
+    pub fn save_pokemon(&mut self, container: &Container) -> Result<()> {
         let tx = self.conn.transaction()?;
         
         tx.execute(
-            "INSERT INTO pokemon (name, level, hp, attack, defense, speed, pokemon_type, status)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            "INSERT INTO pokemon (name, level, hp, attack, defense, speed, pokemon_type, status, exp, exp_to_next_level)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             params![
                 container.name,
                 container.level,
@@ -60,6 +61,8 @@ impl Database {
                 container.speed,
                 format!("{:?}", container.pokemon_type),
                 container.status,
+                container.exp,
+                container.exp_to_next_level,
             ],
         )?;
 
