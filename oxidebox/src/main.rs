@@ -4,6 +4,7 @@ mod battle;
 mod moves;
 mod database;
 mod evolution;
+mod stats;
 
 use clap::Parser;
 use cli::{Cli, Commands};
@@ -21,6 +22,7 @@ fn main() {
     container_manager.summon("Pikachu", 10, 100, 25, 10, 15, PokemonType::Electric);
     container_manager.summon("Charizard", 12, 120, 30, 15, 12, PokemonType::Fire);
 
+    // In your main function where commands are matched:
     match cli.command {
         Commands::Summon { pokemon } => {
             container_manager.summon(&pokemon, 5, 80, 20, 8, 12, PokemonType::Normal);
@@ -47,5 +49,8 @@ fn main() {
                 println!("⚠️ Failed to load: {}", e);
             }
         },
+        Commands::Stats => {
+            container_manager.display_stats();
+        }
     }
 }

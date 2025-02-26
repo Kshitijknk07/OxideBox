@@ -29,4 +29,5 @@ pub enum Commands {
     Load {
         pokemon: String,
     },
+    Stats,
 }
