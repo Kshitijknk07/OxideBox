@@ -8,9 +8,9 @@ impl Battle {
         println!("⚔️ Battle begins between {} and {}!", pokemon1.name, pokemon2.name);
 
         while pokemon1.is_active() && pokemon2.is_active() {
-            Battle::attack(pokemon1, pokemon2);
+            Battle::turn(pokemon1, pokemon2);
             if pokemon2.is_active() {
-                Battle::attack(pokemon2, pokemon1);
+                Battle::turn(pokemon2, pokemon1);
             }
         }
 
@@ -18,14 +18,20 @@ impl Battle {
         println!("🏆 {} wins the battle!", winner);
     }
 
-    fn attack(attacker: &mut Container, defender: &mut Container) {
-        let mut rng = rand::thread_rng();
-        let random_factor: f32 = rng.gen_range(0.8..1.2);
-        
-        let base_damage = ((attacker.attack as f32 * random_factor) - (defender.defense as f32 / 2.0)) as i32;
-        let damage = base_damage.max(1);
+    fn turn(attacker: &mut Container, defender: &mut Container) {
+        println!("\n{}'s turn!", attacker.name);
+        println!("Available moves:");
+        for (i, move_) in attacker.moves.iter().enumerate() {
+            println!("{}. {} (PP: {}/{})", i + 1, move_.name, move_.pp, move_.max_pp);
+        }
 
-        println!("⚡ {} attacks {}!", attacker.name, defender.name);
-        defender.take_damage(damage);
+        let mut rng = rand::thread_rng();
+        let move_index = if !attacker.moves.is_empty() {
+            rng.gen_range(0..attacker.moves.len())
+        } else {
+            0 // Use default attack if no moves are available
+        };
+
+        attacker.use_move(move_index, defender);
     }
 }

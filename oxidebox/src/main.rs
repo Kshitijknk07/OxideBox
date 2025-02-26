@@ -1,22 +1,26 @@
 mod cli;
 mod container;
 mod battle;
+mod moves;
+mod database;
 
 use clap::Parser;
 use cli::{Cli, Commands};
 use container::ContainerManager;
+use moves::PokemonType;  // Single import for PokemonType
 
 fn main() {
     let cli = Cli::parse();
     let mut container_manager = ContainerManager::new();
 
     // Initialize with some default Pokémon
-    container_manager.summon("Pikachu", 10, 100, 25, 10, 15);
-    container_manager.summon("Charizard", 12, 120, 30, 15, 12);
+    // Update Pokemon initialization
+    container_manager.summon("Pikachu", 10, 100, 25, 10, 15, PokemonType::Electric);
+    container_manager.summon("Charizard", 12, 120, 30, 15, 12, PokemonType::Fire);
 
     match cli.command {
         Commands::Summon { pokemon } => {
-            container_manager.summon(&pokemon, 5, 80, 20, 8, 12);
+            container_manager.summon(&pokemon, 5, 80, 20, 8, 12, PokemonType::Normal);
         }
         Commands::Recall { pokemon } => {
             container_manager.recall(&pokemon);
@@ -30,5 +34,15 @@ fn main() {
         Commands::Battle { pokemon1, pokemon2 } => {
             container_manager.battle(&pokemon1, &pokemon2);
         }
+        Commands::Save { pokemon } => {
+            if let Err(e) = container_manager.save_to_db(&pokemon) {
+                println!("⚠️ Failed to save: {}", e);
+            }
+        },
+        Commands::Load { pokemon } => {
+            if let Err(e) = container_manager.load_from_db(&pokemon) {
+                println!("⚠️ Failed to load: {}", e);
+            }
+        },
     }
 }

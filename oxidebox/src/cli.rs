@@ -23,4 +23,10 @@ pub enum Commands {
         pokemon1: String,
         pokemon2: String,
     },
+    Save {
+        pokemon: String,
+    },
+    Load {
+        pokemon: String,
+    },
 }

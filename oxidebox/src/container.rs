@@ -1,20 +1,25 @@
 use std::collections::HashMap;
 use crate::battle::Battle;  
+use crate::moves::{Move, PokemonType, TypeEffectiveness};
+use crate::database::Database;
+use rusqlite::Result;
 
 #[derive(Debug, Clone)]
 pub struct Container {
     pub name: String,
     pub status: String,
-    pub level: u32, 
+    pub level: u32,
     pub hp: i32,
     pub attack: u32,
     pub defense: u32,
     pub speed: u32,
+    pub pokemon_type: PokemonType,
+    pub moves: Vec<Move>,
 }
 
 impl Container {
-    /// Creates a new `Container` instance.
-    pub fn new(name: &str, level: u32, hp: i32, attack: u32, defense: u32, speed: u32) -> Self {
+    // Update the new method signature
+    pub fn new(name: &str, level: u32, hp: i32, attack: u32, defense: u32, speed: u32, pokemon_type: PokemonType) -> Self {
         Self {
             name: name.to_string(),
             level,
@@ -22,16 +27,24 @@ impl Container {
             attack,
             defense,
             speed,
+            pokemon_type,
             status: "Active".to_string(),
+            moves: Vec::new(),
         }
     }
 
-    /// Checks if the Pokémon is still active (HP > 0).
+    // Fix the is_active method
     pub fn is_active(&self) -> bool {
         self.hp > 0
     }
-
-    /// Applies damage to the Pokémon and updates its status if it faints.
+    pub fn learn_move(&mut self, new_move: Move) {
+        if self.moves.len() < 4 {
+            println!("✨ {} learned {}!", self.name, new_move.name);
+            self.moves.push(new_move);
+        } else {
+            println!("⚠️ {} already knows 4 moves!", self.name);
+        }
+    }
     pub fn take_damage(&mut self, damage: i32) {
         if damage >= self.hp {
             self.hp = 0;
@@ -42,8 +55,24 @@ impl Container {
             println!("🔥 {} took {} damage! HP: {}", self.name, damage, self.hp);
         }
     }
-}
+    pub fn use_move(&mut self, move_index: usize, target: &mut Container) -> bool {
+        if move_index >= self.moves.len() {
+            println!("⚠️ Invalid move index!");
+            return false;
+        }
 
+        let battle_move = &self.moves[move_index];
+        let damage = self.calculate_damage(battle_move.power);
+        
+        println!("⚡ {} used {}!", self.name, battle_move.name);
+        target.take_damage(damage);
+        true
+    }
+
+    fn calculate_damage(&self, move_power: u32) -> i32 {
+        (self.attack as f32 * move_power as f32 / 50.0) as i32
+    }
+}
 /// Manages a collection of `Container` instances and teams.
 pub struct ContainerManager {
     containers: HashMap<String, Container>,
@@ -58,12 +87,11 @@ impl ContainerManager {
     }
 
     /// Summons a new Pokémon and adds it to the containers.
-    pub fn summon(&mut self, name: &str, level: u32, hp: i32, attack: u32, defense: u32, speed: u32) {
-        let container = Container::new(name, level, hp, attack, defense, speed);
+    pub fn summon(&mut self, name: &str, level: u32, hp: i32, attack: u32, defense: u32, speed: u32, pokemon_type: PokemonType) {
+        let container = Container::new(name, level, hp, attack, defense, speed, pokemon_type);
         self.containers.insert(name.to_string(), container);
         println!("⚡ Summoned Pokémon: {} (Level: {}, HP: {})", name, level, hp);
     }
-
     /// Recalls a Pokémon by updating its status to "Stopped".
     pub fn recall(&mut self, name: &str) {
         if let Some(container) = self.containers.get_mut(name) {
@@ -128,5 +156,20 @@ impl ContainerManager {
             println!("⚠️ One or both Pokémon not found!");
             false
         }
+    }
+    pub fn save_to_db(&self, name: &str) -> Result<(), rusqlite::Error> {
+        let mut db = Database::new()?;  // Make db mutable
+        if let Some(pokemon) = self.containers.get(name) {
+            db.save_pokemon(pokemon)?;
+        }
+        Ok(())
+    }
+
+    pub fn load_from_db(&mut self, name: &str) -> Result<(), rusqlite::Error> {
+        let db = Database::new()?;
+        if let Some(pokemon) = db.load_pokemon(name)? {
+            self.containers.insert(name.to_string(), pokemon);
+        }
+        Ok(())
     }
 }
