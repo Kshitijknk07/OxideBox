@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use crate::battle::Battle;  
 
 #[derive(Debug, Clone)]
 pub struct Container {
@@ -46,7 +47,6 @@ impl Container {
 /// Manages a collection of `Container` instances and teams.
 pub struct ContainerManager {
     containers: HashMap<String, Container>,
-    teams: HashMap<String, Vec<String>>, // Team name -> List of container names
 }
 
 impl ContainerManager {
@@ -54,7 +54,6 @@ impl ContainerManager {
     pub fn new() -> Self {
         ContainerManager {
             containers: HashMap::new(),
-            teams: HashMap::new(),
         }
     }
 
@@ -89,70 +88,45 @@ impl ContainerManager {
         println!("📖 Fetching Pokédex...");
         if self.containers.is_empty() {
             println!("⚠️ No Pokémon are currently active.");
-        } else {
-            for container in self.containers.values() {
-                println!(
-                    "Pokémon: {} | Level: {} | HP: {} | Status: {}",
-                    container.name, container.level, container.hp, container.status
-                );
-            }
+            return;
+        }
+        for container in self.containers.values() {
+            println!(
+                "Pokémon: {} | Level: {} | HP: {} | Status: {}",
+                container.name, container.level, container.hp, container.status
+            );
         }
     }
-
-    /// Creates a new team.
-    pub fn create_team(&mut self, team_name: &str) {
-        if self.teams.contains_key(team_name) {
-            println!("⚠️ Team {} already exists!", team_name);
-        } else {
-            self.teams.insert(team_name.to_string(), Vec::new());
-            println!("🌟 Created new team: {}", team_name);
-        }
+    pub fn get_container(&self, name: &str) -> Option<&Container> {
+        self.containers.get(name)
     }
 
-    /// Adds a Pokémon to a team.
-    pub fn add_to_team(&mut self, team_name: &str, container_name: &str) {
-        if let Some(team) = self.teams.get_mut(team_name) {
-            if self.containers.contains_key(container_name) {
-                team.push(container_name.to_string());
-                println!("➕ Added {} to team {}", container_name, team_name);
-            } else {
-                println!("⚠️ Pokémon {} not found!", container_name);
-            }
-        } else {
-            println!("⚠️ Team {} not found!", team_name);
-        }
+    pub fn get_container_mut(&mut self, name: &str) -> Option<&mut Container> {
+        self.containers.get_mut(name)
     }
-
-    /// Removes a Pokémon from a team.
-    pub fn remove_from_team(&mut self, team_name: &str, container_name: &str) {
-        if let Some(team) = self.teams.get_mut(team_name) {
-            if let Some(index) = team.iter().position(|name| name == container_name) {
-                team.remove(index);
-                println!("➖ Removed {} from team {}", container_name, team_name);
-            } else {
-                println!("⚠️ Pokémon {} not found in team {}!", container_name, team_name);
-            }
-        } else {
-            println!("⚠️ Team {} not found!", team_name);
-        }
+    pub fn get_containers_mut(&mut self) -> &mut HashMap<String, Container> {
+        &mut self.containers
     }
+    pub fn battle(&mut self, pokemon1: &str, pokemon2: &str) -> bool {
+        if pokemon1 == pokemon2 {
+            println!("⚠️ A Pokémon cannot battle itself!");
+            return false;
+        }
 
-    /// Displays information about a specific team.
-    pub fn team_info(&self, team_name: &str) {
-        if let Some(team) = self.teams.get(team_name) {
-            println!("🌟 Team {}:", team_name);
-            for container_name in team {
-                if let Some(container) = self.containers.get(container_name) {
-                    println!(
-                        "Pokémon: {} | Level: {} | HP: {} | Status: {}",
-                        container.name, container.level, container.hp, container.status
-                    );
-                } else {
-                    println!("⚠️ Pokémon {} not found!", container_name);
-                }
-            }
+        // Take ownership of both Pokémon
+        if let (Some(mut p1), Some(mut p2)) = (
+            self.containers.remove(pokemon1),
+            self.containers.remove(pokemon2)
+        ) {
+            Battle::start_battle(&mut p1, &mut p2);
+            
+            // Return Pokémon to containers
+            self.containers.insert(pokemon1.to_string(), p1);
+            self.containers.insert(pokemon2.to_string(), p2);
+            true
         } else {
-            println!("⚠️ Team {} not found!", team_name);
+            println!("⚠️ One or both Pokémon not found!");
+            false
         }
     }
 }

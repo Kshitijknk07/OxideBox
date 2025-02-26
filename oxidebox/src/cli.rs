@@ -1,8 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[clap(name = "OxideBox")]
-#[clap(about = "A lightweight Pokémon-themed container runtime")]
+#[clap(author, version, about)]
 pub struct Cli {
     #[clap(subcommand)]
     pub command: Commands,
@@ -10,9 +9,18 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    Summon { pokemon: String },  // Run a container
-    Recall { pokemon: String },  // Stop a container
-    Pokedex,                     // List active containers
-    Release { pokemon: String }, // Remove a container
-    Battle { pokemon1: String, pokemon2: String }, // Battle Command
+    Summon {
+        pokemon: String,
+    },
+    Recall {
+        pokemon: String,
+    },
+    Release {
+        pokemon: String,
+    },
+    Pokedex,
+    Battle {
+        pokemon1: String,
+        pokemon2: String,
+    },
 }

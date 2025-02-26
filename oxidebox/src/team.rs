@@ -15,40 +15,48 @@ impl TeamManager {
     }
 
     // Create a new team
-    pub fn create_team(&mut self, team_name: &str) {
+    pub fn create_team(&mut self, team_name: &str) -> bool {
         if self.teams.contains_key(team_name) {
             println!("⚠️ Team {} already exists!", team_name);
+            false
         } else {
             self.teams.insert(team_name.to_string(), Vec::new());
             println!("🌟 Created new team: {}", team_name);
+            true
         }
     }
 
     // Add a Pokémon to a team
-    pub fn add_to_team(&mut self, team_name: &str, container_name: &str, containers: &HashMap<String, Container>) {
+    pub fn add_to_team(&mut self, team_name: &str, container_name: &str, containers: &HashMap<String, Container>) -> bool {
         if let Some(team) = self.teams.get_mut(team_name) {
             if containers.contains_key(container_name) {
                 team.push(container_name.to_string());
                 println!("➕ Added {} to team {}", container_name, team_name);
+                true
             } else {
                 println!("⚠️ Pokémon {} not found!", container_name);
+                false
             }
         } else {
             println!("⚠️ Team {} not found!", team_name);
+            false
         }
     }
 
     // Remove a Pokémon from a team
-    pub fn remove_from_team(&mut self, team_name: &str, container_name: &str) {
+    pub fn remove_from_team(&mut self, team_name: &str, container_name: &str) -> bool {
         if let Some(team) = self.teams.get_mut(team_name) {
             if let Some(index) = team.iter().position(|name| name == container_name) {
                 team.remove(index);
                 println!("➖ Removed {} from team {}", container_name, team_name);
+                true
             } else {
                 println!("⚠️ Pokémon {} not found in team {}!", container_name, team_name);
+                false
             }
         } else {
             println!("⚠️ Team {} not found!", team_name);
+            false
         }
     }
 

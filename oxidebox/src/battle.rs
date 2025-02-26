@@ -7,34 +7,23 @@ impl Battle {
     pub fn start_battle(pokemon1: &mut Container, pokemon2: &mut Container) {
         println!("⚔️ Battle begins between {} and {}!", pokemon1.name, pokemon2.name);
 
-        // Determine who attacks first based on speed
-        let (first, second) = if pokemon1.speed >= pokemon2.speed {
-            (pokemon1, pokemon2)
-        } else {
-            (pokemon2, pokemon1)
-        };
-
-        while first.is_active() && second.is_active() {
-            Battle::attack(first, second);
-            if second.is_active() {
-                Battle::attack(second, first);
+        while pokemon1.is_active() && pokemon2.is_active() {
+            Battle::attack(pokemon1, pokemon2);
+            if pokemon2.is_active() {
+                Battle::attack(pokemon2, pokemon1);
             }
         }
 
-        // Declare the winner
-        if first.is_active() {
-            println!("🏆 {} wins the battle!", first.name);
-        } else {
-            println!("🏆 {} wins the battle!", second.name);
-        }
+        let winner = if pokemon1.is_active() { &pokemon1.name } else { &pokemon2.name };
+        println!("🏆 {} wins the battle!", winner);
     }
 
     fn attack(attacker: &mut Container, defender: &mut Container) {
         let mut rng = rand::thread_rng();
-        let random_factor: f32 = rng.gen_range(0.8..1.2); // Random multiplier for variability
-
+        let random_factor: f32 = rng.gen_range(0.8..1.2);
+        
         let base_damage = ((attacker.attack as f32 * random_factor) - (defender.defense as f32 / 2.0)) as i32;
-        let damage = if base_damage > 0 { base_damage } else { 1 }; // Ensure minimum damage
+        let damage = base_damage.max(1);
 
         println!("⚡ {} attacks {}!", attacker.name, defender.name);
         defender.take_damage(damage);
