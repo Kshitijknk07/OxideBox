@@ -25,7 +25,7 @@ impl EvolutionManager {
     pub fn new() -> Self {
         let mut evolutions = HashMap::new();
         
-        // Define evolution chains
+       
         evolutions.insert("Pikachu".to_string(), Evolution {
             from: "Pikachu".to_string(),
             to: "Raichu".to_string(),
@@ -38,7 +38,7 @@ impl EvolutionManager {
             },
         });
 
-        // Add more evolution chains here
+       
         
         EvolutionManager { evolutions }
     }

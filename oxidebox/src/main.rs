@@ -9,7 +9,7 @@ mod stats;
 use clap::Parser;
 use cli::{Cli, Commands};
 use container::ContainerManager;
-use moves::PokemonType;  // Single import for PokemonType
+use moves::PokemonType;  
 use evolution::EvolutionManager;
 
 fn main() {
@@ -17,12 +17,11 @@ fn main() {
     let mut container_manager = ContainerManager::new();
     let evolution_manager = EvolutionManager::new();
 
-    // Initialize with some default Pokémon
-    // Update Pokemon initialization
+   
     container_manager.summon("Pikachu", 10, 100, 25, 10, 15, PokemonType::Electric);
     container_manager.summon("Charizard", 12, 120, 30, 15, 12, PokemonType::Fire);
 
-    // In your main function where commands are matched:
+    
     match cli.command {
         Commands::Summon { pokemon } => {
             container_manager.summon(&pokemon, 5, 80, 20, 8, 12, PokemonType::Normal);

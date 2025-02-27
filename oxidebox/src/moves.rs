@@ -64,22 +64,22 @@ impl TypeEffectiveness {
     pub fn new() -> Self {
         let mut effectiveness = HashMap::new();
         
-        // Normal type effectiveness
+        
         effectiveness.insert((PokemonType::Normal, PokemonType::Rock), 0.5);
         effectiveness.insert((PokemonType::Normal, PokemonType::Ghost), 0.0);
         
-        // Fire type effectiveness
+        
         effectiveness.insert((PokemonType::Fire, PokemonType::Fire), 0.5);
         effectiveness.insert((PokemonType::Fire, PokemonType::Water), 0.5);
         effectiveness.insert((PokemonType::Fire, PokemonType::Grass), 2.0);
         effectiveness.insert((PokemonType::Fire, PokemonType::Ice), 2.0);
         
-        // Water type effectiveness
+        
         effectiveness.insert((PokemonType::Water, PokemonType::Fire), 2.0);
         effectiveness.insert((PokemonType::Water, PokemonType::Water), 0.5);
         effectiveness.insert((PokemonType::Water, PokemonType::Grass), 0.5);
         
-        // Add more type effectiveness relationships...
+       
 
         TypeEffectiveness { effectiveness }
     }

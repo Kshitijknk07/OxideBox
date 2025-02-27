@@ -67,7 +67,7 @@ impl Container {
         }
     }
 }
-/// Manages a collection of `Container` instances and teams.
+
 pub struct ContainerManager {
     containers: HashMap<String, Container>,
     trainer_stats: TrainerStats,
@@ -166,7 +166,13 @@ impl ContainerManager {
     }
 
     pub fn load_from_db(&mut self, name: &str) -> Result<(), rusqlite::Error> {
-        // Your database loading logic here
+        let mut db = Database::new()?;
+        if let Some(pokemon) = db.load_pokemon(name)? {
+            self.containers.insert(name.to_string(), pokemon);
+            println!("📥 Loaded Pokémon {} from database", name);
+        } else {
+            println!("⚠️ No Pokémon found in database with name: {}", name);
+        }
         Ok(())
     }
 }

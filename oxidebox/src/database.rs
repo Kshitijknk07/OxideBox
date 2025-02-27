@@ -68,7 +68,7 @@ impl Database {
 
         let pokemon_id = tx.last_insert_rowid();
 
-        // Save moves
+        
         for move_ in &container.moves {
             tx.execute(
                 "INSERT INTO moves (pokemon_id, name, move_type, power, accuracy, pp, max_pp)
@@ -105,12 +105,12 @@ impl Database {
                 row.get(2)?,
                 row.get(3)?,
                 row.get(4)?,
-                // Parse pokemon_type string back to enum
+               
                 match pokemon_type.as_str() {
                     "Fire" => PokemonType::Fire,
                     "Water" => PokemonType::Water,
                     "Electric" => PokemonType::Electric,
-                    // Add other types...
+                    .
                     _ => PokemonType::Normal,
                 }
             );
@@ -118,7 +118,7 @@ impl Database {
         }).optional()?;
 
         if let Some(mut container) = pokemon {
-            // Load moves
+            
             let mut stmt = self.conn.prepare(
                 "SELECT name, move_type, power, accuracy, pp, max_pp 
                  FROM moves m 
@@ -134,7 +134,7 @@ impl Database {
                         "Fire" => PokemonType::Fire,
                         "Water" => PokemonType::Water,
                         "Electric" => PokemonType::Electric,
-                        // Add other types...
+                        
                         _ => PokemonType::Normal,
                     },
                     row.get(2)?,

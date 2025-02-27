@@ -8,7 +8,6 @@ pub struct Battle;
 
 impl Battle {
     pub fn calculate_exp_reward(opponent_level: u32) -> u32 {
-        // Base experience calculation formula
         (opponent_level * 10) + 100
     }
 
@@ -21,20 +20,17 @@ impl Battle {
         while pokemon1.is_active() && pokemon2.is_active() {
             turns += 1;
             
-            // Pokemon 1's turn
             if pokemon1.is_active() {
                 let move_index = rng.gen_range(0..pokemon1.moves.len());
                 Self::execute_move(pokemon1, pokemon2, move_index);
             }
 
-            // Pokemon 2's turn
             if pokemon2.is_active() {
                 let move_index = rng.gen_range(0..pokemon2.moves.len());
                 Self::execute_move(pokemon2, pokemon1, move_index);
             }
         }
 
-        // Update battle statistics
         let (winner, loser) = if pokemon1.is_active() {
             pokemon1.stats.battles_won += 1;
             pokemon2.stats.battles_lost += 1;
@@ -45,7 +41,6 @@ impl Battle {
             (pokemon2, pokemon1)
         };
 
-        // Record battle
         let battle_record = BattleRecord {
             winner: winner.name.clone(),
             loser: loser.name.clone(),
@@ -58,7 +53,6 @@ impl Battle {
 
     fn execute_move(attacker: &mut Container, defender: &mut Container, move_index: usize) {
         if let Some(battle_move) = attacker.moves.get(move_index) {
-            // Update move usage statistics
             let count = attacker.stats.moves_used
                 .entry(battle_move.name.clone())
                 .or_insert(0);
@@ -68,7 +62,6 @@ impl Battle {
             let damage = battle_move.power;
             defender.hp -= damage as i32;
             
-            // Update damage statistics
             attacker.stats.total_damage_dealt += damage;
             defender.stats.total_damage_taken += damage;
             
