@@ -1,7 +1,7 @@
-use rusqlite::{Connection, Result, OptionalExtension};
-use rusqlite::params;
 use crate::container::Container;
 use crate::moves::{Move, PokemonType};
+use rusqlite::params;
+use rusqlite::{Connection, OptionalExtension, Result};
 
 pub struct Database {
     conn: Connection,
@@ -10,7 +10,7 @@ pub struct Database {
 impl Database {
     pub fn new() -> Result<Self> {
         let conn = Connection::open("pokemon.db")?;
-        
+
         conn.execute(
             "CREATE TABLE IF NOT EXISTS pokemon (
                 id INTEGER PRIMARY KEY,
@@ -48,7 +48,7 @@ impl Database {
 
     pub fn save_pokemon(&mut self, container: &Container) -> Result<()> {
         let tx = self.conn.transaction()?;
-        
+
         tx.execute(
             "INSERT INTO pokemon (name, level, hp, attack, defense, speed, pokemon_type, status, exp, exp_to_next_level)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
@@ -68,7 +68,6 @@ impl Database {
 
         let pokemon_id = tx.last_insert_rowid();
 
-        
         for move_ in &container.moves {
             tx.execute(
                 "INSERT INTO moves (pokemon_id, name, move_type, power, accuracy, pp, max_pp)
@@ -92,38 +91,38 @@ impl Database {
 
     pub fn load_pokemon(&self, name: &str) -> Result<Option<Container>> {
         let mut stmt = self.conn.prepare(
-            "SELECT level, hp, attack, defense, speed, pokemon_type, status 
-             FROM pokemon WHERE name = ?1"
+            "SELECT level, hp, attack, defense, speed, pokemon_type, status
+             FROM pokemon WHERE name = ?1",
         )?;
 
-        let pokemon = stmt.query_row(params![name], |row| {
-            let pokemon_type: String = row.get(5)?;
-            let container = Container::new(
-                name,
-                row.get(0)?,
-                row.get(1)?,
-                row.get(2)?,
-                row.get(3)?,
-                row.get(4)?,
-               
-                match pokemon_type.as_str() {
-                    "Fire" => PokemonType::Fire,
-                    "Water" => PokemonType::Water,
-                    "Electric" => PokemonType::Electric,
-                    .
-                    _ => PokemonType::Normal,
-                }
-            );
-            Ok(container)
-        }).optional()?;
+        let pokemon = stmt
+            .query_row(params![name], |row| {
+                let pokemon_type: String = row.get(5)?;
+                let container = Container::new(
+                    name,
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                    match pokemon_type.as_str() {
+                        "Fire" => PokemonType::Fire,
+                        "Water" => PokemonType::Water,
+                        "Electric" => PokemonType::Electric,
+
+                        _ => PokemonType::Normal,
+                    },
+                );
+                Ok(container)
+            })
+            .optional()?;
 
         if let Some(mut container) = pokemon {
-            
             let mut stmt = self.conn.prepare(
-                "SELECT name, move_type, power, accuracy, pp, max_pp 
-                 FROM moves m 
-                 JOIN pokemon p ON m.pokemon_id = p.id 
-                 WHERE p.name = ?1"
+                "SELECT name, move_type, power, accuracy, pp, max_pp
+                 FROM moves m
+                 JOIN pokemon p ON m.pokemon_id = p.id
+                 WHERE p.name = ?1",
             )?;
 
             let moves = stmt.query_map(params![name], |row| {
@@ -134,12 +133,12 @@ impl Database {
                         "Fire" => PokemonType::Fire,
                         "Water" => PokemonType::Water,
                         "Electric" => PokemonType::Electric,
-                        
+
                         _ => PokemonType::Normal,
                     },
                     row.get(2)?,
                     row.get(3)?,
-                    row.get(5)?
+                    row.get(5)?,
                 ))
             })?;
 
