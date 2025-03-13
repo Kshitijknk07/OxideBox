@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use crate::moves::PokemonType;
 
 #[derive(Parser)]
 #[clap(author, version, about)]
@@ -9,25 +10,46 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
+    CreateNamespace {
+        name: String,
+    },
+    DeleteNamespace {
+        name: String,
+    },
     Summon {
-        pokemon: String,
+        namespace: String,
+        name: String,
+        level: u32,
+        hp: i32,
+        attack: u32,
+        defense: u32,
+        speed: u32,
+        pokemon_type: PokemonType,
     },
-    Recall {
-        pokemon: String,
+    Start {
+        id: String,
     },
-    Release {
-        pokemon: String,
+    Stop {
+        id: String,
     },
-    Pokedex,
+    Pause {
+        id: String,
+    },
+    List {
+        namespace: Option<String>,
+    },
+    Status {
+        id: String,
+    },
     Battle {
-        pokemon1: String,
-        pokemon2: String,
+        id1: String,
+        id2: String,
     },
     Save {
-        pokemon: String,
+        id: String,
     },
     Load {
-        pokemon: String,
+        id: String,
     },
     Stats,
 }

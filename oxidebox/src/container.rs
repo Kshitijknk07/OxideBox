@@ -1,19 +1,42 @@
 use std::collections::HashMap;
-use crate::battle::Battle;  
+use std::time::{SystemTime, UNIX_EPOCH};
+use crate::battle::Battle;
 use crate::moves::{Move, PokemonType};
 use crate::database::Database;
 use rusqlite::Result;
-use crate::evolution::{Evolution, EvolutionManager};
+use crate::evolution::EvolutionManager;
 use crate::stats::PokemonStats;
-use chrono::Utc;
 use crate::stats::TrainerStats;
+use colored::*;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ContainerState {
+    Created,
+    Running,
+    Paused,
+    Stopped,
+    Failed,
+    Evolved,
+}
+
+#[derive(Debug, Clone)]
+pub struct ContainerResources {
+    pub cpu_limit: f64,
+    pub memory_limit: u64,
+    pub storage_limit: u64,
+    pub current_cpu: f64,
+    pub current_memory: u64,
+    pub current_storage: u64,
+}
 
 #[derive(Debug, Clone)]
 pub struct Container {
+    pub id: String,
     pub name: String,
-    pub status: String,
+    pub state: ContainerState,
     pub level: u32,
     pub hp: i32,
+    pub max_hp: i32,
     pub attack: u32,
     pub defense: u32,
     pub speed: u32,
@@ -22,157 +45,262 @@ pub struct Container {
     pub exp: u32,
     pub exp_to_next_level: u32,
     pub stats: PokemonStats,
+    pub resources: ContainerResources,
+    pub created_at: SystemTime,
+    pub namespace: String,
+    pub labels: HashMap<String, String>,
 }
 
 impl Container {
-    pub fn new(name: &str, level: u32, hp: i32, attack: u32, defense: u32, speed: u32, pokemon_type: PokemonType) -> Self {
+    pub fn new(
+        name: &str,
+        namespace: &str,
+        level: u32,
+        hp: i32,
+        attack: u32,
+        defense: u32,
+        speed: u32,
+        pokemon_type: PokemonType,
+    ) -> Self {
         let exp_to_next_level = Self::calculate_exp_to_next_level(level);
+        let now = SystemTime::now();
+        let id = format!("pokemon-{}-{}", name, now.duration_since(UNIX_EPOCH).unwrap().as_secs());
+        
+        let mut labels = HashMap::new();
+        labels.insert("type".to_string(), pokemon_type.to_string());
+        labels.insert("namespace".to_string(), namespace.to_string());
+        
         Self {
+            id,
             name: name.to_string(),
+            state: ContainerState::Created,
             level,
             hp,
+            max_hp: hp,
             attack,
             defense,
             speed,
             pokemon_type,
-            status: "Active".to_string(),
             moves: Vec::new(),
             exp: 0,
             exp_to_next_level,
-            stats: PokemonStats {
-                battles_won: 0,
-                battles_lost: 0,
-                total_damage_dealt: 0,
-                total_damage_taken: 0,
-                evolution_count: 0,
-                levels_gained: 0,
-                moves_used: HashMap::new(),
-                creation_date: Utc::now(),
-                total_exp_gained: 0,
+            stats: PokemonStats::new(),
+            resources: ContainerResources {
+                cpu_limit: 1.0,
+                memory_limit: 512 * 1024 * 1024,
+                storage_limit: 1024 * 1024 * 1024,
+                current_cpu: 0.0,
+                current_memory: 0,
+                current_storage: 0,
             },
+            created_at: now,
+            namespace: namespace.to_string(),
+            labels,
         }
     }
+
     fn calculate_exp_to_next_level(level: u32) -> u32 {
         (level * level * 100) as u32
     }
+
     pub fn is_active(&self) -> bool {
-        self.hp > 0
+        self.hp > 0 && self.state == ContainerState::Running
     }
-    pub fn learn_move(&mut self, new_move: Move) {
+
+    pub fn learn_move(&mut self, new_move: Move) -> bool {
         if self.moves.len() < 4 {
-            println!("✨ {} learned {}!", self.name, new_move.name);
             self.moves.push(new_move);
+            true
         } else {
-            println!("⚠️ {} already knows 4 moves!", self.name);
+            false
         }
+    }
+
+    pub fn update_resources(&mut self, cpu: f64, memory: u64, storage: u64) {
+        self.resources.current_cpu = cpu.min(self.resources.cpu_limit);
+        self.resources.current_memory = memory.min(self.resources.memory_limit);
+        self.resources.current_storage = storage.min(self.resources.storage_limit);
+    }
+
+    pub fn display_status(&self) {
+        println!("{}", "=== Pokemon Container Status ===".bright_cyan());
+        println!("{}: {}", "ID".bright_green(), self.id);
+        println!("{}: {}", "Name".bright_green(), self.name);
+        println!("{}: {}", "Namespace".bright_green(), self.namespace);
+        println!("{}: {}", "State".bright_green(), format!("{:?}", self.state).bright_yellow());
+        println!("{}: {}", "Level".bright_green(), self.level);
+        println!("{}: {}/{}", "HP".bright_green(), self.hp, self.max_hp);
+        println!("{}: {}", "Type".bright_green(), self.pokemon_type.to_string().bright_magenta());
+        println!("{}: {}", "Moves".bright_green(), self.moves.len());
+        println!("{}: {}/{}", "EXP".bright_green(), self.exp, self.exp_to_next_level);
+        println!("{}", "=== Resource Usage ===".bright_cyan());
+        println!("{}: {:.1}%", "CPU".bright_green(), (self.resources.current_cpu / self.resources.cpu_limit) * 100.0);
+        println!("{}: {:.1}%", "Memory".bright_green(), (self.resources.current_memory as f64 / self.resources.memory_limit as f64) * 100.0);
+        println!("{}: {:.1}%", "Storage".bright_green(), (self.resources.current_storage as f64 / self.resources.storage_limit as f64) * 100.0);
+        println!("{}", "=====================".bright_cyan());
     }
 }
 
 pub struct ContainerManager {
     containers: HashMap<String, Container>,
-    trainer_stats: TrainerStats,
+    namespaces: HashMap<String, Vec<String>>,
+    pub trainer_stats: TrainerStats,
 }
 
 impl ContainerManager {
     pub fn new() -> Self {
         Self {
             containers: HashMap::new(),
+            namespaces: HashMap::new(),
             trainer_stats: TrainerStats::new(),
         }
     }
 
-    pub fn display_stats(&self) {
-        self.trainer_stats.display_detailed_stats();
-    }
-
-    pub fn summon(&mut self, name: &str, level: u32, hp: i32, attack: u32, defense: u32, speed: u32, pokemon_type: PokemonType) {
-        let container = Container::new(name, level, hp, attack, defense, speed, pokemon_type);
-        self.containers.insert(name.to_string(), container);
-        self.trainer_stats.total_pokemon_caught += 1;
-        println!("⚡ Summoned Pokémon: {} (Level: {}, HP: {})", name, level, hp);
-    }
-
-    pub fn recall(&mut self, name: &str) {
-        if let Some(container) = self.containers.get_mut(name) {
-            container.status = "Stopped".to_string();
-            println!("🛑 Recalling Pokémon: {}", name);
-        } else {
-            println!("⚠️ Pokémon {} not found!", name);
-        }
-    }
-
-    pub fn release(&mut self, name: &str) {
-        if self.containers.remove(name).is_some() {
-            self.trainer_stats.total_pokemon_released += 1;
-            println!("🌿 Releasing Pokémon: {} back into the wild!", name);
-        } else {
-            println!("⚠️ Pokémon {} not found!", name);
-        }
-    }
-
-    pub fn pokedex(&self) {
-        println!("📖 Fetching Pokédex...");
-        if self.containers.is_empty() {
-            println!("⚠️ No Pokémon are currently active.");
-            return;
-        }
-        for container in self.containers.values() {
-            println!(
-                "Pokémon: {} | Level: {} | HP: {} | Status: {}",
-                container.name, container.level, container.hp, container.status
-            );
-        }
-    }
-
-    pub fn get_container(&self, name: &str) -> Option<&Container> {
-        self.containers.get(name)
-    }
-
-    pub fn get_container_mut(&mut self, name: &str) -> Option<&mut Container> {
-        self.containers.get_mut(name)
-    }
-
-    pub fn get_containers_mut(&mut self) -> &mut HashMap<String, Container> {
-        &mut self.containers
-    }
-
-    pub fn battle(&mut self, pokemon1: &str, pokemon2: &str, evolution_manager: &EvolutionManager) -> bool {
-        if pokemon1 == pokemon2 {
-            println!("⚠️ A Pokémon cannot battle itself!");
+    pub fn create_namespace(&mut self, name: &str) -> bool {
+        if self.namespaces.contains_key(name) {
             return false;
         }
+        self.namespaces.insert(name.to_string(), Vec::new());
+        true
+    }
 
-        if let (Some(mut p1), Some(mut p2)) = (
-            self.containers.remove(pokemon1),
-            self.containers.remove(pokemon2)
-        ) {
-            Battle::start_battle(&mut p1, &mut p2, evolution_manager);
-            
-            self.containers.insert(pokemon1.to_string(), p1);
-            self.containers.insert(pokemon2.to_string(), p2);
+    pub fn delete_namespace(&mut self, name: &str) -> bool {
+        if let Some(container_ids) = self.namespaces.remove(name) {
+            for id in container_ids {
+                self.containers.remove(&id);
+            }
             true
         } else {
-            println!("⚠️ One or both Pokémon not found!");
             false
         }
     }
 
-    pub fn save_to_db(&self, name: &str) -> Result<(), rusqlite::Error> {
+    pub fn summon(&mut self, namespace: &str, name: &str, level: u32, hp: i32, attack: u32, defense: u32, speed: u32, pokemon_type: PokemonType) -> bool {
+        if !self.namespaces.contains_key(namespace) {
+            return false;
+        }
+
+        let container = Container::new(name, namespace, level, hp, attack, defense, speed, pokemon_type);
+        let id = container.id.clone();
+        
+        self.containers.insert(id.clone(), container);
+        if let Some(containers) = self.namespaces.get_mut(namespace) {
+            containers.push(id);
+        }
+        
+        self.trainer_stats.total_pokemon_caught += 1;
+        true
+    }
+
+    pub fn start_container(&mut self, id: &str) -> bool {
+        if let Some(container) = self.containers.get_mut(id) {
+            container.state = ContainerState::Running;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn stop_container(&mut self, id: &str) -> bool {
+        if let Some(container) = self.containers.get_mut(id) {
+            container.state = ContainerState::Stopped;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn pause_container(&mut self, id: &str) -> bool {
+        if let Some(container) = self.containers.get_mut(id) {
+            container.state = ContainerState::Paused;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn get_container(&self, id: &str) -> Option<&Container> {
+        self.containers.get(id)
+    }
+
+    pub fn get_container_mut(&mut self, id: &str) -> Option<&mut Container> {
+        self.containers.get_mut(id)
+    }
+
+    pub fn list_containers(&self, namespace: Option<&str>) {
+        println!("{}", "=== Pokemon Containers ===".bright_cyan());
+        for (id, container) in &self.containers {
+            if let Some(ns) = namespace {
+                if container.namespace != ns {
+                    continue;
+                }
+            }
+            println!("{}: {} ({})", 
+                id.bright_green(),
+                container.name.bright_yellow(),
+                format!("{:?}", container.state).bright_magenta()
+            );
+        }
+        println!("{}", "=====================".bright_cyan());
+    }
+
+    pub fn battle(&mut self, id1: &str, id2: &str, evolution_manager: &EvolutionManager) -> bool {
+        if id1 == id2 {
+            println!("{}", "⚠️ A Pokemon cannot battle itself!".bright_red());
+            return false;
+        }
+
+        let p1 = self.containers.remove(id1);
+        let p2 = self.containers.remove(id2);
+
+        match (p1, p2) {
+            (Some(mut p1), Some(mut p2)) => {
+                if p1.state != ContainerState::Running || p2.state != ContainerState::Running {
+                    println!("{}", "⚠️ Both Pokemon must be running to battle!".bright_red());
+                    self.containers.insert(id1.to_string(), p1);
+                    self.containers.insert(id2.to_string(), p2);
+                    return false;
+                }
+
+                Battle::start_battle(&mut p1, &mut p2, evolution_manager);
+                self.containers.insert(id1.to_string(), p1);
+                self.containers.insert(id2.to_string(), p2);
+                true
+            }
+            (Some(p1), None) => {
+                println!("{}", "⚠️ Second Pokemon not found!".bright_red());
+                self.containers.insert(id1.to_string(), p1);
+                false
+            }
+            (None, Some(p2)) => {
+                println!("{}", "⚠️ First Pokemon not found!".bright_red());
+                self.containers.insert(id2.to_string(), p2);
+                false
+            }
+            (None, None) => {
+                println!("{}", "⚠️ Both Pokemon not found!".bright_red());
+                false
+            }
+        }
+    }
+
+    pub fn save_to_db(&self, id: &str) -> Result<(), rusqlite::Error> {
         let mut db = Database::new()?;
-        if let Some(pokemon) = self.containers.get(name) {
+        if let Some(pokemon) = self.containers.get(id) {
             db.save_pokemon(pokemon)?;
         }
         Ok(())
     }
 
-    pub fn load_from_db(&mut self, name: &str) -> Result<(), rusqlite::Error> {
-        let mut db = Database::new()?;
-        if let Some(pokemon) = db.load_pokemon(name)? {
-            self.containers.insert(name.to_string(), pokemon);
-            println!("📥 Loaded Pokémon {} from database", name);
-        } else {
-            println!("⚠️ No Pokémon found in database with name: {}", name);
+    pub fn load_from_db(&mut self, id: &str) -> Result<(), rusqlite::Error> {
+        let db = Database::new()?;
+        if let Some(pokemon) = db.load_pokemon(id)? {
+            self.containers.insert(id.to_string(), pokemon);
         }
         Ok(())
+    }
+
+    pub fn display_stats(&self) {
+        self.trainer_stats.display_detailed_stats();
     }
 }

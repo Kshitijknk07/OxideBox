@@ -9,45 +9,86 @@ mod stats;
 use clap::Parser;
 use cli::{Cli, Commands};
 use container::ContainerManager;
-use moves::PokemonType;  
 use evolution::EvolutionManager;
+use colored::*;
 
 fn main() {
     let cli = Cli::parse();
     let mut container_manager = ContainerManager::new();
     let evolution_manager = EvolutionManager::new();
 
-   
-    container_manager.summon("Pikachu", 10, 100, 25, 10, 15, PokemonType::Electric);
-    container_manager.summon("Charizard", 12, 120, 30, 15, 12, PokemonType::Fire);
-
-    
     match cli.command {
-        Commands::Summon { pokemon } => {
-            container_manager.summon(&pokemon, 5, 80, 20, 8, 12, PokemonType::Normal);
-        }
-        Commands::Recall { pokemon } => {
-            container_manager.recall(&pokemon);
-        }
-        Commands::Pokedex => {
-            container_manager.pokedex();
-        }
-        Commands::Release { pokemon } => {
-            container_manager.release(&pokemon);
-        }
-        Commands::Battle { pokemon1, pokemon2 } => {
-            container_manager.battle(&pokemon1, &pokemon2, &evolution_manager);
-        }
-        Commands::Save { pokemon } => {
-            if let Err(e) = container_manager.save_to_db(&pokemon) {
-                println!("⚠️ Failed to save: {}", e);
+        Commands::CreateNamespace { name } => {
+            if container_manager.create_namespace(&name) {
+                println!("{}", format!("✨ Created namespace: {}", name).bright_green());
+            } else {
+                println!("{}", format!("⚠️ Namespace {} already exists!", name).bright_red());
             }
-        },
-        Commands::Load { pokemon } => {
-            if let Err(e) = container_manager.load_from_db(&pokemon) {
-                println!("⚠️ Failed to load: {}", e);
+        }
+        Commands::DeleteNamespace { name } => {
+            if container_manager.delete_namespace(&name) {
+                println!("{}", format!("🗑️ Deleted namespace: {}", name).bright_green());
+            } else {
+                println!("{}", format!("⚠️ Namespace {} not found!", name).bright_red());
             }
-        },
+        }
+        Commands::Summon { namespace, name, level, hp, attack, defense, speed, pokemon_type } => {
+            if container_manager.summon(&namespace, &name, level, hp, attack, defense, speed, pokemon_type) {
+                println!("{}", format!("⚡ Summoned Pokémon: {} (Level: {}, HP: {})", name, level, hp).bright_green());
+            } else {
+                println!("{}", format!("⚠️ Failed to summon Pokémon in namespace: {}", namespace).bright_red());
+            }
+        }
+        Commands::Start { id } => {
+            if container_manager.start_container(&id) {
+                println!("{}", format!("▶️ Started container: {}", id).bright_green());
+            } else {
+                println!("{}", format!("⚠️ Container {} not found!", id).bright_red());
+            }
+        }
+        Commands::Stop { id } => {
+            if container_manager.stop_container(&id) {
+                println!("{}", format!("⏹️ Stopped container: {}", id).bright_green());
+            } else {
+                println!("{}", format!("⚠️ Container {} not found!", id).bright_red());
+            }
+        }
+        Commands::Pause { id } => {
+            if container_manager.pause_container(&id) {
+                println!("{}", format!("⏸️ Paused container: {}", id).bright_green());
+            } else {
+                println!("{}", format!("⚠️ Container {} not found!", id).bright_red());
+            }
+        }
+        Commands::List { namespace } => {
+            container_manager.list_containers(namespace.as_deref());
+        }
+        Commands::Status { id } => {
+            if let Some(container) = container_manager.get_container(&id) {
+                container.display_status();
+            } else {
+                println!("{}", format!("⚠️ Container {} not found!", id).bright_red());
+            }
+        }
+        Commands::Battle { id1, id2 } => {
+            if container_manager.battle(&id1, &id2, &evolution_manager) {
+                println!("{}", "⚔️ Battle completed!".bright_green());
+            } else {
+                println!("{}", "⚠️ Battle failed!".bright_red());
+            }
+        }
+        Commands::Save { id } => {
+            match container_manager.save_to_db(&id) {
+                Ok(_) => println!("{}", format!("💾 Saved container: {}", id).bright_green()),
+                Err(e) => println!("{}", format!("⚠️ Failed to save container: {}", e).bright_red()),
+            }
+        }
+        Commands::Load { id } => {
+            match container_manager.load_from_db(&id) {
+                Ok(_) => println!("{}", format!("📥 Loaded container: {}", id).bright_green()),
+                Err(e) => println!("{}", format!("⚠️ Failed to load container: {}", e).bright_red()),
+            }
+        }
         Commands::Stats => {
             container_manager.display_stats();
         }

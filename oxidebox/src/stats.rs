@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
+use colored::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BattleRecord {
@@ -23,6 +24,22 @@ pub struct PokemonStats {
     pub total_exp_gained: u32,
 }
 
+impl PokemonStats {
+    pub fn new() -> Self {
+        Self {
+            battles_won: 0,
+            battles_lost: 0,
+            total_damage_dealt: 0,
+            total_damage_taken: 0,
+            evolution_count: 0,
+            levels_gained: 0,
+            moves_used: HashMap::new(),
+            creation_date: Utc::now(),
+            total_exp_gained: 0,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct TrainerStats {
     pub pokemon_stats: HashMap<String, PokemonStats>,
@@ -31,6 +48,11 @@ pub struct TrainerStats {
     pub total_pokemon_released: u32,
     pub start_date: DateTime<Utc>,
     pub total_battles: u32,
+    pub total_wins: u32,
+    pub total_losses: u32,
+    pub favorite_pokemon_type: String,
+    pub most_used_move: String,
+    pub total_exp_gained: u32,
 }
 
 impl TrainerStats {
@@ -42,16 +64,31 @@ impl TrainerStats {
             total_pokemon_released: 0,
             start_date: Utc::now(),
             total_battles: 0,
+            total_wins: 0,
+            total_losses: 0,
+            favorite_pokemon_type: "Normal".to_string(),
+            most_used_move: "Tackle".to_string(),
+            total_exp_gained: 0,
         }
     }
 
     pub fn display_detailed_stats(&self) {
-        println!("\n🌟 Detailed Trainer Statistics 🌟\n");
-        println!("👤 Trainer Overview");
-        println!("-------------------");
-        println!("🎮 Journey Started: {}", self.start_date.format("%Y-%m-%d %H:%M:%S UTC"));
-        println!("📊 Total Battles: {}", self.total_battles);
-        println!("✨ Total Pokémon Caught: {}", self.total_pokemon_caught);
-        println!("🌿 Total Pokémon Released: {}", self.total_pokemon_released);
+        println!("{}", "=== Trainer Statistics ===".bright_cyan());
+        println!("{}: {}", "Total Pokemon Caught".bright_green(), self.total_pokemon_caught);
+        println!("{}: {}", "Total Pokemon Released".bright_green(), self.total_pokemon_released);
+        println!("{}: {}", "Total Battles".bright_green(), self.total_battles);
+        println!("{}: {}", "Total Wins".bright_green(), self.total_wins);
+        println!("{}: {}", "Total Losses".bright_green(), self.total_losses);
+        println!("{}: {}", "Win Rate".bright_green(), 
+            if self.total_battles > 0 {
+                format!("{:.1}%", (self.total_wins as f64 / self.total_battles as f64) * 100.0)
+            } else {
+                "0.0%".to_string()
+            }
+        );
+        println!("{}: {}", "Favorite Pokemon Type".bright_green(), self.favorite_pokemon_type);
+        println!("{}: {}", "Most Used Move".bright_green(), self.most_used_move);
+        println!("{}: {}", "Total EXP Gained".bright_green(), self.total_exp_gained);
+        println!("{}", "=====================".bright_cyan());
     }
 }

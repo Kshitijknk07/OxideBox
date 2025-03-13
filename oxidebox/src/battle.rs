@@ -11,7 +11,7 @@ impl Battle {
         (opponent_level * 10) + 100
     }
 
-    pub fn start_battle(pokemon1: &mut Container, pokemon2: &mut Container, evolution_manager: &EvolutionManager) {
+    pub fn start_battle(pokemon1: &mut Container, pokemon2: &mut Container, _evolution_managerr: &EvolutionManager) {
         let mut turns = 0;
         println!("⚔️ Battle start: {} vs {}", pokemon1.name, pokemon2.name);
         
@@ -41,7 +41,7 @@ impl Battle {
             (pokemon2, pokemon1)
         };
 
-        let battle_record = BattleRecord {
+        let _battle_record = BattleRecord {
             winner: winner.name.clone(),
             loser: loser.name.clone(),
             date: Utc::now(),

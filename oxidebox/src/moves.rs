@@ -1,6 +1,8 @@
+use std::fmt;
 use std::collections::HashMap;
+use std::str::FromStr;
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PokemonType {
     Normal,
     Fire,
@@ -17,27 +19,85 @@ pub enum PokemonType {
     Rock,
     Ghost,
     Dragon,
+    Dark,
+    Steel,
+    Fairy,
+}
+
+impl fmt::Display for PokemonType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PokemonType::Normal => write!(f, "Normal"),
+            PokemonType::Fire => write!(f, "Fire"),
+            PokemonType::Water => write!(f, "Water"),
+            PokemonType::Electric => write!(f, "Electric"),
+            PokemonType::Grass => write!(f, "Grass"),
+            PokemonType::Ice => write!(f, "Ice"),
+            PokemonType::Fighting => write!(f, "Fighting"),
+            PokemonType::Poison => write!(f, "Poison"),
+            PokemonType::Ground => write!(f, "Ground"),
+            PokemonType::Flying => write!(f, "Flying"),
+            PokemonType::Psychic => write!(f, "Psychic"),
+            PokemonType::Bug => write!(f, "Bug"),
+            PokemonType::Rock => write!(f, "Rock"),
+            PokemonType::Ghost => write!(f, "Ghost"),
+            PokemonType::Dragon => write!(f, "Dragon"),
+            PokemonType::Dark => write!(f, "Dark"),
+            PokemonType::Steel => write!(f, "Steel"),
+            PokemonType::Fairy => write!(f, "Fairy"),
+        }
+    }
+}
+
+impl FromStr for PokemonType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "normal" => Ok(PokemonType::Normal),
+            "fire" => Ok(PokemonType::Fire),
+            "water" => Ok(PokemonType::Water),
+            "electric" => Ok(PokemonType::Electric),
+            "grass" => Ok(PokemonType::Grass),
+            "ice" => Ok(PokemonType::Ice),
+            "fighting" => Ok(PokemonType::Fighting),
+            "poison" => Ok(PokemonType::Poison),
+            "ground" => Ok(PokemonType::Ground),
+            "flying" => Ok(PokemonType::Flying),
+            "psychic" => Ok(PokemonType::Psychic),
+            "bug" => Ok(PokemonType::Bug),
+            "rock" => Ok(PokemonType::Rock),
+            "ghost" => Ok(PokemonType::Ghost),
+            "dragon" => Ok(PokemonType::Dragon),
+            "dark" => Ok(PokemonType::Dark),
+            "steel" => Ok(PokemonType::Steel),
+            "fairy" => Ok(PokemonType::Fairy),
+            _ => Err(format!("Invalid Pokemon type: {}", s)),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct Move {
     pub name: String,
-    pub move_type: PokemonType,
     pub power: u32,
     pub accuracy: u32,
     pub pp: u32,
     pub max_pp: u32,
+    pub pokemon_type: PokemonType,
+    pub description: String,
 }
 
 impl Move {
-    pub fn new(name: &str, move_type: PokemonType, power: u32, accuracy: u32, max_pp: u32) -> Self {
-        Move {
+    pub fn new(name: &str, power: u32, accuracy: u32, pp: u32, pokemon_type: PokemonType, description: &str) -> Self {
+        Self {
             name: name.to_string(),
-            move_type,
             power,
             accuracy,
-            pp: max_pp,
-            max_pp,
+            pp,
+            max_pp: pp,
+            pokemon_type,
+            description: description.to_string(),
         }
     }
 

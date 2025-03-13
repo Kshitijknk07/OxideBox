@@ -1,4 +1,3 @@
-use crate::moves::PokemonType;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]

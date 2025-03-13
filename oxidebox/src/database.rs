@@ -23,7 +23,9 @@ impl Database {
                 pokemon_type TEXT,
                 status TEXT,
                 exp INTEGER,
-                exp_to_next_level INTEGER
+                exp_to_next_level INTEGER,
+                namespace TEXT,
+                created_at INTEGER
             )",
             [],
         )?;
@@ -33,11 +35,12 @@ impl Database {
                 id INTEGER PRIMARY KEY,
                 pokemon_id INTEGER,
                 name TEXT NOT NULL,
-                move_type TEXT,
+                pokemon_type TEXT,
                 power INTEGER,
                 accuracy INTEGER,
                 pp INTEGER,
                 max_pp INTEGER,
+                description TEXT,
                 FOREIGN KEY(pokemon_id) REFERENCES pokemon(id)
             )",
             [],
@@ -50,8 +53,8 @@ impl Database {
         let tx = self.conn.transaction()?;
 
         tx.execute(
-            "INSERT INTO pokemon (name, level, hp, attack, defense, speed, pokemon_type, status, exp, exp_to_next_level)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            "INSERT INTO pokemon (name, level, hp, attack, defense, speed, pokemon_type, status, exp, exp_to_next_level, namespace, created_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
             params![
                 container.name,
                 container.level,
@@ -60,9 +63,11 @@ impl Database {
                 container.defense,
                 container.speed,
                 format!("{:?}", container.pokemon_type),
-                container.status,
+                format!("{:?}", container.state),
                 container.exp,
                 container.exp_to_next_level,
+                container.namespace,
+                container.created_at.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs(),
             ],
         )?;
 
@@ -70,16 +75,17 @@ impl Database {
 
         for move_ in &container.moves {
             tx.execute(
-                "INSERT INTO moves (pokemon_id, name, move_type, power, accuracy, pp, max_pp)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                "INSERT INTO moves (pokemon_id, name, pokemon_type, power, accuracy, pp, max_pp, description)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
                 params![
                     pokemon_id,
                     move_.name,
-                    format!("{:?}", move_.move_type),
+                    format!("{:?}", move_.pokemon_type),
                     move_.power,
                     move_.accuracy,
                     move_.pp,
                     move_.max_pp,
+                    move_.description,
                 ],
             )?;
         }
@@ -89,27 +95,44 @@ impl Database {
         Ok(())
     }
 
-    pub fn load_pokemon(&self, name: &str) -> Result<Option<Container>> {
+    pub fn load_pokemon(&self, id: &str) -> Result<Option<Container>> {
         let mut stmt = self.conn.prepare(
-            "SELECT level, hp, attack, defense, speed, pokemon_type, status
-             FROM pokemon WHERE name = ?1",
+            "SELECT name, level, hp, attack, defense, speed, pokemon_type, status, exp, exp_to_next_level, namespace, created_at
+             FROM pokemon WHERE id = ?1",
         )?;
 
         let pokemon = stmt
-            .query_row(params![name], |row| {
-                let pokemon_type: String = row.get(5)?;
+            .query_row(params![id], |row| {
+                let pokemon_type: String = row.get(6)?;
+                let created_at = std::time::UNIX_EPOCH + std::time::Duration::from_secs(row.get(11)?);
+                
                 let container = Container::new(
-                    name,
-                    row.get(0)?,
+                    &row.get::<_, String>(0)?,
+                    &row.get::<_, String>(10)?,
                     row.get(1)?,
                     row.get(2)?,
                     row.get(3)?,
                     row.get(4)?,
+                    row.get(5)?,
                     match pokemon_type.as_str() {
+                        "Normal" => PokemonType::Normal,
                         "Fire" => PokemonType::Fire,
                         "Water" => PokemonType::Water,
                         "Electric" => PokemonType::Electric,
-
+                        "Grass" => PokemonType::Grass,
+                        "Ice" => PokemonType::Ice,
+                        "Fighting" => PokemonType::Fighting,
+                        "Poison" => PokemonType::Poison,
+                        "Ground" => PokemonType::Ground,
+                        "Flying" => PokemonType::Flying,
+                        "Psychic" => PokemonType::Psychic,
+                        "Bug" => PokemonType::Bug,
+                        "Rock" => PokemonType::Rock,
+                        "Ghost" => PokemonType::Ghost,
+                        "Dragon" => PokemonType::Dragon,
+                        "Dark" => PokemonType::Dark,
+                        "Steel" => PokemonType::Steel,
+                        "Fairy" => PokemonType::Fairy,
                         _ => PokemonType::Normal,
                     },
                 );
@@ -119,26 +142,41 @@ impl Database {
 
         if let Some(mut container) = pokemon {
             let mut stmt = self.conn.prepare(
-                "SELECT name, move_type, power, accuracy, pp, max_pp
+                "SELECT name, power, accuracy, pp, pokemon_type, description
                  FROM moves m
                  JOIN pokemon p ON m.pokemon_id = p.id
-                 WHERE p.name = ?1",
+                 WHERE p.id = ?1",
             )?;
 
-            let moves = stmt.query_map(params![name], |row| {
-                let move_type: String = row.get(1)?;
+            let moves = stmt.query_map(params![id], |row| {
+                let pokemon_type: String = row.get(4)?;
                 Ok(Move::new(
                     &row.get::<_, String>(0)?,
-                    match move_type.as_str() {
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    match pokemon_type.as_str() {
+                        "Normal" => PokemonType::Normal,
                         "Fire" => PokemonType::Fire,
                         "Water" => PokemonType::Water,
                         "Electric" => PokemonType::Electric,
-
+                        "Grass" => PokemonType::Grass,
+                        "Ice" => PokemonType::Ice,
+                        "Fighting" => PokemonType::Fighting,
+                        "Poison" => PokemonType::Poison,
+                        "Ground" => PokemonType::Ground,
+                        "Flying" => PokemonType::Flying,
+                        "Psychic" => PokemonType::Psychic,
+                        "Bug" => PokemonType::Bug,
+                        "Rock" => PokemonType::Rock,
+                        "Ghost" => PokemonType::Ghost,
+                        "Dragon" => PokemonType::Dragon,
+                        "Dark" => PokemonType::Dark,
+                        "Steel" => PokemonType::Steel,
+                        "Fairy" => PokemonType::Fairy,
                         _ => PokemonType::Normal,
                     },
-                    row.get(2)?,
-                    row.get(3)?,
-                    row.get(5)?,
+                    &row.get::<_, String>(5)?,
                 ))
             })?;
 
@@ -146,7 +184,7 @@ impl Database {
                 container.learn_move(move_result?);
             }
 
-            println!("📂 Loaded {} from database!", name);
+            println!("📂 Loaded {} from database!", id);
             Ok(Some(container))
         } else {
             Ok(None)
