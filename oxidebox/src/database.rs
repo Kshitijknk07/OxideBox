@@ -12,6 +12,13 @@ impl Database {
         let conn = Connection::open("pokemon.db")?;
 
         conn.execute(
+            "CREATE TABLE IF NOT EXISTS namespaces (
+                name TEXT PRIMARY KEY
+            )",
+            [],
+        )?;
+
+        conn.execute(
             "CREATE TABLE IF NOT EXISTS pokemon (
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -25,7 +32,8 @@ impl Database {
                 exp INTEGER,
                 exp_to_next_level INTEGER,
                 namespace TEXT,
-                created_at INTEGER
+                created_at INTEGER,
+                FOREIGN KEY(namespace) REFERENCES namespaces(name)
             )",
             [],
         )?;
@@ -47,6 +55,32 @@ impl Database {
         )?;
 
         Ok(Database { conn })
+    }
+
+    pub fn create_namespace(&mut self, name: &str) -> Result<bool> {
+        let result = self.conn.execute(
+            "INSERT INTO namespaces (name) VALUES (?1)",
+            params![name],
+        );
+        Ok(result.is_ok())
+    }
+
+    pub fn delete_namespace(&mut self, name: &str) -> Result<bool> {
+        let result = self.conn.execute(
+            "DELETE FROM namespaces WHERE name = ?1",
+            params![name],
+        );
+        Ok(result.is_ok())
+    }
+
+    pub fn get_namespaces(&self) -> Result<Vec<String>> {
+        let mut stmt = self.conn.prepare("SELECT name FROM namespaces")?;
+        let namespaces = stmt.query_map([], |row| row.get::<_, String>(0))?;
+        let mut result = Vec::new();
+        for namespace in namespaces {
+            result.push(namespace?);
+        }
+        Ok(result)
     }
 
     pub fn save_pokemon(&mut self, container: &Container) -> Result<()> {

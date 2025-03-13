@@ -145,50 +145,71 @@ pub struct ContainerManager {
     containers: HashMap<String, Container>,
     namespaces: HashMap<String, Vec<String>>,
     pub trainer_stats: TrainerStats,
+    db: Database,
 }
 
 impl ContainerManager {
     pub fn new() -> Self {
-        Self {
+        let mut db = Database::new().expect("Failed to create database");
+        let mut namespaces = HashMap::new();
+        
+        // Load existing namespaces from database
+        if let Ok(existing_namespaces) = db.get_namespaces() {
+            for namespace in existing_namespaces {
+                namespaces.insert(namespace.clone(), Vec::new());
+            }
+        }
+
+        ContainerManager {
             containers: HashMap::new(),
-            namespaces: HashMap::new(),
+            namespaces,
             trainer_stats: TrainerStats::new(),
+            db,
         }
     }
 
     pub fn create_namespace(&mut self, name: &str) -> bool {
-        if self.namespaces.contains_key(name) {
-            return false;
-        }
-        self.namespaces.insert(name.to_string(), Vec::new());
-        true
-    }
-
-    pub fn delete_namespace(&mut self, name: &str) -> bool {
-        if let Some(container_ids) = self.namespaces.remove(name) {
-            for id in container_ids {
-                self.containers.remove(&id);
-            }
+        if self.db.create_namespace(name).unwrap_or(false) {
+            self.namespaces.insert(name.to_string(), Vec::new());
             true
         } else {
             false
         }
     }
 
-    pub fn summon(&mut self, namespace: &str, name: &str, level: u32, hp: i32, attack: u32, defense: u32, speed: u32, pokemon_type: PokemonType) -> bool {
+    pub fn delete_namespace(&mut self, name: &str) -> bool {
+        if self.db.delete_namespace(name).unwrap_or(false) {
+            self.namespaces.remove(name);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn summon(&mut self, namespace: &str, name: &str, level: u8, hp: u16, attack: u16, defense: u16, speed: u16, pokemon_type: PokemonType) -> bool {
         if !self.namespaces.contains_key(namespace) {
             return false;
         }
 
-        let container = Container::new(name, namespace, level, hp, attack, defense, speed, pokemon_type);
-        let id = container.id.clone();
+        let container = Container::new(
+            name,
+            namespace,
+            level as u32,
+            hp as i32,
+            attack as u32,
+            defense as u32,
+            speed as u32,
+            pokemon_type,
+        );
         
-        self.containers.insert(id.clone(), container);
-        if let Some(containers) = self.namespaces.get_mut(namespace) {
-            containers.push(id);
+        // Save to database
+        if let Err(_) = self.db.save_pokemon(&container) {
+            return false;
         }
-        
+
+        // Update trainer stats
         self.trainer_stats.total_pokemon_caught += 1;
+        
         true
     }
 

@@ -19,11 +19,11 @@ pub enum Commands {
     Summon {
         namespace: String,
         name: String,
-        level: u32,
-        hp: i32,
-        attack: u32,
-        defense: u32,
-        speed: u32,
+        level: u8,
+        hp: u16,
+        attack: u16,
+        defense: u16,
+        speed: u16,
         pokemon_type: PokemonType,
     },
     Start {
