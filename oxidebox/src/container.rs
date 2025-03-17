@@ -107,9 +107,20 @@ impl Container {
         self.hp > 0 && self.state == ContainerState::Running
     }
 
-    pub fn learn_move(&mut self, new_move: Move) -> bool {
+    pub fn evolve(&mut self, new_form: &str) -> bool {
+        if self.level >= 30 { 
+            self.name = new_form.to_string();
+            self.max_hp += 20;
+            self.hp = self.max_hp;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn learn_move(&mut self, move_name: &str) -> bool {
         if self.moves.len() < 4 {
-            self.moves.push(new_move);
+            self.moves.push(move_name.to_string());
             true
         } else {
             false
@@ -288,17 +299,17 @@ impl ContainerManager {
                 self.containers.insert(id2.to_string(), p2);
                 true
             }
-            (Some(p1), None) => {
+            (Some(p1), none) => {
                 println!("{}", "⚠️ Second Pokemon not found!".bright_red());
                 self.containers.insert(id1.to_string(), p1);
                 false
             }
-            (None, Some(p2)) => {
+            (none, Some(p2)) => {
                 println!("{}", "⚠️ First Pokemon not found!".bright_red());
                 self.containers.insert(id2.to_string(), p2);
                 false
             }
-            (None, None) => {
+            (none, none) => {
                 println!("{}", "⚠️ Both Pokemon not found!".bright_red());
                 false
             }

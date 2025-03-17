@@ -224,4 +224,21 @@ impl Database {
             Ok(None)
         }
     }
+
+    pub fn backup_database(&self, backup_path: &str) -> Result<()> {
+        let backup_conn = Connection::open(backup_path)?;
+        self.conn.backup(DatabaseName::Main, &backup_conn, None)?;
+        Ok(())
+    }
+
+    pub fn migrate_database(&mut self) -> Result<()> {
+        self.conn.execute(
+            "CREATE TABLE IF NOT EXISTS migrations (
+                version INTEGER PRIMARY KEY,
+                applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )",
+            [],
+        )?;
+        Ok(())
+    }
 }

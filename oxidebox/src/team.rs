@@ -7,6 +7,13 @@ pub struct TeamManager {
     teams: HashMap<String, Vec<String>>, 
 }
 
+pub struct TeamStats {
+    pub battles_won: u32,
+    pub battles_lost: u32,
+    pub total_exp: u32,
+    pub average_level: f32,
+}
+
 impl TeamManager {
     pub fn new() -> Self {
         TeamManager {
@@ -77,5 +84,28 @@ impl TeamManager {
         } else {
             println!("⚠️ Team {} not found!", team_name);
         }
+    }
+
+    pub fn calculate_team_stats(&self, containers: &HashMap<String, Container>) -> TeamStats {
+        let mut stats = TeamStats {
+            battles_won: 0,
+            battles_lost: 0,
+            total_exp: 0,
+            average_level: 0.0,
+        };
+
+        for (_, team) in &self.teams {
+            let mut total_level = 0;
+            for container_name in team {
+                if let Some(container) = containers.get(container_name) {
+                    stats.total_exp += container.exp;
+                    total_level += container.level;
+                }
+            }
+            if !team.is_empty() {
+                stats.average_level = total_level as f32 / team.len() as f32;
+            }
+        }
+        stats
     }
 }

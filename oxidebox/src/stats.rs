@@ -41,6 +41,13 @@ impl PokemonStats {
 }
 
 #[derive(Debug)]
+pub struct TimeBasedStats {
+    pub daily_catches: u32,
+    pub weekly_wins: u32,
+    pub monthly_exp: u32,
+}
+
+#[derive(Debug)]
 pub struct TrainerStats {
     pub pokemon_stats: HashMap<String, PokemonStats>,
     pub battle_history: Vec<BattleRecord>,
@@ -53,11 +60,23 @@ pub struct TrainerStats {
     pub favorite_pokemon_type: String,
     pub most_used_move: String,
     pub total_exp_gained: u32,
+    pub time_based_stats: TimeBasedStats,
+    pub daily_catches: u32,
+    pub weekly_wins: u32,
+    pub monthly_exp: u32,
 }
 
 impl TrainerStats {
     pub fn new() -> Self {
         Self {
+            time_based_stats: TimeBasedStats {
+                daily_catches: 0,
+                weekly_wins: 0,
+                monthly_exp: 0,
+            },
+            daily_catches: 0,
+            weekly_wins: 0,
+            monthly_exp: 0,
             pokemon_stats: HashMap::new(),
             battle_history: Vec::new(),
             total_pokemon_caught: 0,
@@ -90,5 +109,31 @@ impl TrainerStats {
         println!("{}: {}", "Most Used Move".bright_green(), self.most_used_move);
         println!("{}: {}", "Total EXP Gained".bright_green(), self.total_exp_gained);
         println!("{}", "=====================".bright_cyan());
+    }
+
+    pub fn add_daily_catch(&mut self) {
+        self.daily_catches += 1;
+    }
+
+    pub fn add_weekly_win(&mut self) {
+        self.weekly_wins += 1;
+    }
+
+    pub fn add_monthly_exp(&mut self, exp: u32) {
+        self.monthly_exp += exp;
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_trainer_stats() {
+        let stats = TrainerStats::new();
+        assert_eq!(stats.total_battles, 0);
+        assert_eq!(stats.total_wins, 0);
+        assert_eq!(stats.total_losses, 0);
     }
 }
