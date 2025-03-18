@@ -1,8 +1,9 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
 use std::collections::HashMap;
-use std::str::FromStr;
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum PokemonType {
     Normal,
     Fire,
@@ -24,28 +25,34 @@ pub enum PokemonType {
     Fairy,
 }
 
+impl PokemonType {
+    pub fn all_types() -> Vec<Self> {
+        vec![
+            Self::Normal,
+            Self::Fire,
+            Self::Water,
+            Self::Electric,
+            Self::Grass,
+            Self::Ice,
+            Self::Fighting,
+            Self::Poison,
+            Self::Ground,
+            Self::Flying,
+            Self::Psychic,
+            Self::Bug,
+            Self::Rock,
+            Self::Ghost,
+            Self::Dragon,
+            Self::Dark,
+            Self::Steel,
+            Self::Fairy,
+        ]
+    }
+}
+
 impl fmt::Display for PokemonType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            PokemonType::Normal => write!(f, "Normal"),
-            PokemonType::Fire => write!(f, "Fire"),
-            PokemonType::Water => write!(f, "Water"),
-            PokemonType::Electric => write!(f, "Electric"),
-            PokemonType::Grass => write!(f, "Grass"),
-            PokemonType::Ice => write!(f, "Ice"),
-            PokemonType::Fighting => write!(f, "Fighting"),
-            PokemonType::Poison => write!(f, "Poison"),
-            PokemonType::Ground => write!(f, "Ground"),
-            PokemonType::Flying => write!(f, "Flying"),
-            PokemonType::Psychic => write!(f, "Psychic"),
-            PokemonType::Bug => write!(f, "Bug"),
-            PokemonType::Rock => write!(f, "Rock"),
-            PokemonType::Ghost => write!(f, "Ghost"),
-            PokemonType::Dragon => write!(f, "Dragon"),
-            PokemonType::Dark => write!(f, "Dark"),
-            PokemonType::Steel => write!(f, "Steel"),
-            PokemonType::Fairy => write!(f, "Fairy"),
-        }
+        write!(f, "{:?}", self)
     }
 }
 
@@ -53,99 +60,160 @@ impl FromStr for PokemonType {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "normal" => Ok(PokemonType::Normal),
-            "fire" => Ok(PokemonType::Fire),
-            "water" => Ok(PokemonType::Water),
-            "electric" => Ok(PokemonType::Electric),
-            "grass" => Ok(PokemonType::Grass),
-            "ice" => Ok(PokemonType::Ice),
-            "fighting" => Ok(PokemonType::Fighting),
-            "poison" => Ok(PokemonType::Poison),
-            "ground" => Ok(PokemonType::Ground),
-            "flying" => Ok(PokemonType::Flying),
-            "psychic" => Ok(PokemonType::Psychic),
-            "bug" => Ok(PokemonType::Bug),
-            "rock" => Ok(PokemonType::Rock),
-            "ghost" => Ok(PokemonType::Ghost),
-            "dragon" => Ok(PokemonType::Dragon),
-            "dark" => Ok(PokemonType::Dark),
-            "steel" => Ok(PokemonType::Steel),
-            "fairy" => Ok(PokemonType::Fairy),
-            _ => Err(format!("Invalid Pokemon type: {}", s)),
+        Self::all_types()
+            .into_iter()
+            .find(|t| t.to_string().to_lowercase() == s.to_lowercase())
+            .ok_or_else(|| format!("Invalid Pokemon type: {}", s))
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Move {
+    pub name: String,
+    pub power: u32,
+    pub accuracy: u8,
+    pub pp: u8,
+    pub max_pp: u8,
+    pub pokemon_type: PokemonType,
+    pub category: MoveCategory,
+    pub description: String,
+    pub effect: Option<MoveEffect>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum MoveCategory {
+    Physical,
+    Special,
+    Status,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MoveEffect {
+    pub effect_type: EffectType,
+    pub chance: u8,
+    pub turns: Option<u8>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum EffectType {
+    StatChange { stat: Stat, stages: i8 },
+    StatusCondition(StatusCondition),
+    WeatherChange(Weather),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Stat {
+    Attack,
+    Defense,
+    SpecialAttack,
+    SpecialDefense,
+    Speed,
+    Accuracy,
+    Evasion,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum StatusCondition {
+    Burn,
+    Freeze,
+    Paralysis,
+    Poison,
+    Sleep,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Weather {
+    Sunny,
+    Rain,
+    Sandstorm,
+    Hail,
+}
+
+impl Move {
+    pub fn new(
+        name: &str,
+        power: u32,
+        accuracy: u8,
+        pp: u8,
+        pokemon_type: PokemonType,
+        category: MoveCategory,
+        description: &str,
+        effect: Option<MoveEffect>,
+    ) -> Self {
+        Self {
+            name: name.to_string(),
+            power,
+            accuracy: accuracy.clamp(0, 100),
+            pp: pp.clamp(0, 64),
+            max_pp: pp.clamp(0, 64),
+            pokemon_type,
+            category,
+            description: description.to_string(),
+            effect,
         }
+    }
+
+    pub fn use_move(&mut self) -> Result<(), String> {
+        if self.pp == 0 {
+            return Err(format!("No PP left for {}!", self.name));
+        }
+        self.pp -= 1;
+        Ok(())
+    }
+
+    pub fn restore_pp(&mut self, amount: u8) {
+        self.pp = (self.pp + amount).min(self.max_pp);
+    }
+
+    pub fn is_usable(&self) -> bool {
+        self.pp > 0
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Move {
-    pub name: String,
-    pub power: u32,
-    pub accuracy: u32,
-    pub pp: u32,
-    pub max_pp: u32,
-    pub pokemon_type: PokemonType,
-    pub description: String,
-}
-
-impl Move {
-    pub fn new(name: &str, power: u32, accuracy: u32, pp: u32, pokemon_type: PokemonType, description: &str) -> Self {
-        Self {
-            name: name.to_string(),
-            power,
-            accuracy,
-            pp,
-            max_pp: pp,
-            pokemon_type,
-            description: description.to_string(),
-        }
-    }
-
-    pub fn use_move(&mut self) -> bool {
-        if self.pp > 0 {
-            self.pp -= 1;
-            true
-        } else {
-            println!("❌ No PP left for {}!", self.name);
-            false
-        }
-    }
-
-    pub fn restore_pp(&mut self) {
-        self.pp = self.max_pp;
-    }
-}
-
 pub struct TypeEffectiveness {
     effectiveness: HashMap<(PokemonType, PokemonType), f32>,
+}
+
+impl Default for TypeEffectiveness {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TypeEffectiveness {
     pub fn new() -> Self {
         let mut effectiveness = HashMap::new();
         
-        
+        // Normal type
         effectiveness.insert((PokemonType::Normal, PokemonType::Rock), 0.5);
         effectiveness.insert((PokemonType::Normal, PokemonType::Ghost), 0.0);
-        
-        
+        effectiveness.insert((PokemonType::Normal, PokemonType::Steel), 0.5);
+
+        // Fire type
         effectiveness.insert((PokemonType::Fire, PokemonType::Fire), 0.5);
         effectiveness.insert((PokemonType::Fire, PokemonType::Water), 0.5);
         effectiveness.insert((PokemonType::Fire, PokemonType::Grass), 2.0);
         effectiveness.insert((PokemonType::Fire, PokemonType::Ice), 2.0);
-        
-        
+        effectiveness.insert((PokemonType::Fire, PokemonType::Bug), 2.0);
+        effectiveness.insert((PokemonType::Fire, PokemonType::Steel), 2.0);
+        effectiveness.insert((PokemonType::Fire, PokemonType::Rock), 0.5);
+
+        // Water type
         effectiveness.insert((PokemonType::Water, PokemonType::Fire), 2.0);
         effectiveness.insert((PokemonType::Water, PokemonType::Water), 0.5);
         effectiveness.insert((PokemonType::Water, PokemonType::Grass), 0.5);
-        
-       
+        effectiveness.insert((PokemonType::Water, PokemonType::Ground), 2.0);
+        effectiveness.insert((PokemonType::Water, PokemonType::Rock), 2.0);
 
-        TypeEffectiveness { effectiveness }
+
+        Self { effectiveness }
     }
 
-    pub fn get_multiplier(&self, attacker_type: &PokemonType, defender_type: &PokemonType) -> f32 {
-        *self.effectiveness.get(&(attacker_type.clone(), defender_type.clone()))
-            .unwrap_or(&1.0)
+    pub fn get_multiplier(&self, attacker_type: PokemonType, defender_type: PokemonType) -> f32 {
+        self.effectiveness
+            .get(&(attacker_type, defender_type))
+            .copied()
+            .unwrap_or(1.0)
     }
 }
