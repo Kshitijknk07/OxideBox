@@ -10,6 +10,7 @@ use crate::stats::TrainerStats;
 use colored::*;
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum ContainerState {
     Created,
     Running,
@@ -48,6 +49,7 @@ pub struct Container {
     pub resources: ContainerResources,
     pub created_at: SystemTime,
     pub namespace: String,
+    #[allow(dead_code)]
     pub labels: HashMap<String, String>,
 }
 
@@ -107,6 +109,7 @@ impl Container {
         self.hp > 0 && self.state == ContainerState::Running
     }
 
+    #[allow(dead_code)]
     pub fn evolve(&mut self, new_form: &str) -> bool {
         if self.level >= 30 { 
             self.name = new_form.to_string();
@@ -118,15 +121,16 @@ impl Container {
         }
     }
 
-    pub fn learn_move(&mut self, move_name: &str) -> bool {
+    pub fn learn_move(&mut self, mv: Move) -> bool {
         if self.moves.len() < 4 {
-            self.moves.push(move_name.to_string());
+            self.moves.push(mv);
             true
         } else {
             false
         }
     }
 
+    #[allow(dead_code)]
     pub fn update_resources(&mut self, cpu: f64, memory: u64, storage: u64) {
         self.resources.current_cpu = cpu.min(self.resources.cpu_limit);
         self.resources.current_memory = memory.min(self.resources.memory_limit);
@@ -161,7 +165,7 @@ pub struct ContainerManager {
 
 impl ContainerManager {
     pub fn new() -> Self {
-        let mut db = Database::new().expect("Failed to create database");
+        let db = Database::new().expect("Failed to create database");
         let mut namespaces = HashMap::new();
         
         // Load existing namespaces from database
@@ -255,6 +259,7 @@ impl ContainerManager {
         self.containers.get(id)
     }
 
+    #[allow(dead_code)]
     pub fn get_container_mut(&mut self, id: &str) -> Option<&mut Container> {
         self.containers.get_mut(id)
     }
@@ -299,17 +304,17 @@ impl ContainerManager {
                 self.containers.insert(id2.to_string(), p2);
                 true
             }
-            (Some(p1), none) => {
+            (Some(p1), None) => {
                 println!("{}", "⚠️ Second Pokemon not found!".bright_red());
                 self.containers.insert(id1.to_string(), p1);
                 false
             }
-            (none, Some(p2)) => {
+            (None, Some(p2)) => {
                 println!("{}", "⚠️ First Pokemon not found!".bright_red());
                 self.containers.insert(id2.to_string(), p2);
                 false
             }
-            (none, none) => {
+            (None, None) => {
                 println!("{}", "⚠️ Both Pokemon not found!".bright_red());
                 false
             }

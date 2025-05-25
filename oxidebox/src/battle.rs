@@ -7,6 +7,7 @@ use crate::stats::BattleRecord;
 pub struct Battle;
 
 impl Battle {
+    #[allow(dead_code)]
     pub fn calculate_exp_reward(opponent_level: u32) -> u32 {
         (opponent_level * 10) + 100
     }

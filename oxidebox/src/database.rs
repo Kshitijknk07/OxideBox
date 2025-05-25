@@ -138,7 +138,7 @@ impl Database {
         let pokemon = stmt
             .query_row(params![id], |row| {
                 let pokemon_type: String = row.get(6)?;
-                let created_at = std::time::UNIX_EPOCH + std::time::Duration::from_secs(row.get(11)?);
+                let _created_at = std::time::UNIX_EPOCH + std::time::Duration::from_secs(row.get(11)?);
                 
                 let container = Container::new(
                     &row.get::<_, String>(0)?,
@@ -210,7 +210,9 @@ impl Database {
                         "Fairy" => PokemonType::Fairy,
                         _ => PokemonType::Normal,
                     },
+                    crate::moves::MoveCategory::Physical, // Default
                     &row.get::<_, String>(5)?,
+                    None, // No effect info in DB
                 ))
             })?;
 
@@ -225,11 +227,11 @@ impl Database {
         }
     }
 
-    pub fn backup_database(&self, backup_path: &str) -> Result<()> {
-        let backup_conn = Connection::open(backup_path)?;
-        self.conn.backup(DatabaseName::Main, &backup_conn, None)?;
-        Ok(())
-    }
+    // pub fn backup_database(&self, backup_path: &str) -> Result<()> {
+    //     let backup_conn = Connection::open(backup_path)?;
+    //     self.conn.backup(DatabaseName::Main, &backup_conn, None)?;
+    //     Ok(())
+    // }
 
     pub fn migrate_database(&mut self) -> Result<()> {
         self.conn.execute(

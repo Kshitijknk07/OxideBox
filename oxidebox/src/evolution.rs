@@ -17,6 +17,7 @@ pub struct StatMultipliers {
 }
 
 pub struct EvolutionManager {
+    #[allow(dead_code)]
     evolutions: HashMap<String, Evolution>,
 }
 
@@ -42,6 +43,7 @@ impl EvolutionManager {
         EvolutionManager { evolutions }
     }
 
+    #[allow(dead_code)]
     pub fn get_evolution(&self, pokemon_name: &str) -> Option<&Evolution> {
         self.evolutions.get(pokemon_name)
     }

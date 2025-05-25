@@ -172,6 +172,7 @@ impl Move {
 
 #[derive(Debug, Clone)]
 pub struct TypeEffectiveness {
+    #[allow(dead_code)]
     effectiveness: HashMap<(PokemonType, PokemonType), f32>,
 }
 
