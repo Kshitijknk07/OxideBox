@@ -1,10 +1,8 @@
-
-
-use std::collections::HashMap;
 use crate::container::{Container, ContainerManager};
+use std::collections::HashMap;
 
 pub struct TeamManager {
-    teams: HashMap<String, Vec<String>>, 
+    teams: HashMap<String, Vec<String>>,
 }
 
 pub struct TeamStats {
@@ -21,7 +19,6 @@ impl TeamManager {
         }
     }
 
-    
     pub fn create_team(&mut self, team_name: &str) -> bool {
         if self.teams.contains_key(team_name) {
             println!("⚠️ Team {} already exists!", team_name);
@@ -33,8 +30,12 @@ impl TeamManager {
         }
     }
 
-    
-    pub fn add_to_team(&mut self, team_name: &str, container_name: &str, containers: &HashMap<String, Container>) -> bool {
+    pub fn add_to_team(
+        &mut self,
+        team_name: &str,
+        container_name: &str,
+        containers: &HashMap<String, Container>,
+    ) -> bool {
         if let Some(team) = self.teams.get_mut(team_name) {
             if containers.contains_key(container_name) {
                 team.push(container_name.to_string());
@@ -50,7 +51,6 @@ impl TeamManager {
         }
     }
 
-    
     pub fn remove_from_team(&mut self, team_name: &str, container_name: &str) -> bool {
         if let Some(team) = self.teams.get_mut(team_name) {
             if let Some(index) = team.iter().position(|name| name == container_name) {
@@ -58,7 +58,10 @@ impl TeamManager {
                 println!("➖ Removed {} from team {}", container_name, team_name);
                 true
             } else {
-                println!("⚠️ Pokémon {} not found in team {}!", container_name, team_name);
+                println!(
+                    "⚠️ Pokémon {} not found in team {}!",
+                    container_name, team_name
+                );
                 false
             }
         } else {
@@ -67,7 +70,6 @@ impl TeamManager {
         }
     }
 
-    
     pub fn team_info(&self, team_name: &str, containers: &HashMap<String, Container>) {
         if let Some(team) = self.teams.get(team_name) {
             println!("🌟 Team {}:", team_name);

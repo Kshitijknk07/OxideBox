@@ -1,6 +1,6 @@
-use std::{fmt, str::FromStr};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
+use std::{fmt, str::FromStr};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -153,6 +153,7 @@ impl Move {
         }
     }
 
+    #[allow(dead_code)]
     pub fn use_move(&mut self) -> Result<(), String> {
         if self.pp == 0 {
             return Err(format!("No PP left for {}!", self.name));
@@ -161,10 +162,12 @@ impl Move {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn restore_pp(&mut self, amount: u8) {
         self.pp = (self.pp + amount).min(self.max_pp);
     }
 
+    #[allow(dead_code)]
     pub fn is_usable(&self) -> bool {
         self.pp > 0
     }
@@ -185,7 +188,7 @@ impl Default for TypeEffectiveness {
 impl TypeEffectiveness {
     pub fn new() -> Self {
         let mut effectiveness = HashMap::new();
-        
+
         // Normal type
         effectiveness.insert((PokemonType::Normal, PokemonType::Rock), 0.5);
         effectiveness.insert((PokemonType::Normal, PokemonType::Ghost), 0.0);
@@ -207,10 +210,10 @@ impl TypeEffectiveness {
         effectiveness.insert((PokemonType::Water, PokemonType::Ground), 2.0);
         effectiveness.insert((PokemonType::Water, PokemonType::Rock), 2.0);
 
-
         Self { effectiveness }
     }
 
+    #[allow(dead_code)]
     pub fn get_multiplier(&self, attacker_type: PokemonType, defender_type: PokemonType) -> f32 {
         self.effectiveness
             .get(&(attacker_type, defender_type))

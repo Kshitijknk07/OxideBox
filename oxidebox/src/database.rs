@@ -58,18 +58,16 @@ impl Database {
     }
 
     pub fn create_namespace(&mut self, name: &str) -> Result<bool> {
-        let result = self.conn.execute(
-            "INSERT INTO namespaces (name) VALUES (?1)",
-            params![name],
-        );
+        let result = self
+            .conn
+            .execute("INSERT INTO namespaces (name) VALUES (?1)", params![name]);
         Ok(result.is_ok())
     }
 
     pub fn delete_namespace(&mut self, name: &str) -> Result<bool> {
-        let result = self.conn.execute(
-            "DELETE FROM namespaces WHERE name = ?1",
-            params![name],
-        );
+        let result = self
+            .conn
+            .execute("DELETE FROM namespaces WHERE name = ?1", params![name]);
         Ok(result.is_ok())
     }
 
@@ -138,8 +136,9 @@ impl Database {
         let pokemon = stmt
             .query_row(params![id], |row| {
                 let pokemon_type: String = row.get(6)?;
-                let _created_at = std::time::UNIX_EPOCH + std::time::Duration::from_secs(row.get(11)?);
-                
+                let _created_at =
+                    std::time::UNIX_EPOCH + std::time::Duration::from_secs(row.get(11)?);
+
                 let container = Container::new(
                     &row.get::<_, String>(0)?,
                     &row.get::<_, String>(10)?,
@@ -247,6 +246,7 @@ impl Database {
     //     Ok(())
     // }
 
+    #[allow(dead_code)]
     pub fn migrate_database(&mut self) -> Result<()> {
         self.conn.execute(
             "CREATE TABLE IF NOT EXISTS migrations (

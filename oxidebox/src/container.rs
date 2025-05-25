@@ -1,13 +1,13 @@
-use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
 use crate::battle::Battle;
-use crate::moves::{Move, PokemonType};
 use crate::database::Database;
-use rusqlite::Result;
 use crate::evolution::EvolutionManager;
+use crate::moves::{Move, PokemonType};
 use crate::stats::PokemonStats;
 use crate::stats::TrainerStats;
 use colored::*;
+use rusqlite::Result;
+use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
@@ -66,12 +66,16 @@ impl Container {
     ) -> Self {
         let exp_to_next_level = Self::calculate_exp_to_next_level(level);
         let now = SystemTime::now();
-        let id = format!("pokemon-{}-{}", name, now.duration_since(UNIX_EPOCH).unwrap().as_secs());
-        
+        let id = format!(
+            "pokemon-{}-{}",
+            name,
+            now.duration_since(UNIX_EPOCH).unwrap().as_secs()
+        );
+
         let mut labels = HashMap::new();
         labels.insert("type".to_string(), pokemon_type.to_string());
         labels.insert("namespace".to_string(), namespace.to_string());
-        
+
         Self {
             id,
             name: name.to_string(),
@@ -111,7 +115,7 @@ impl Container {
 
     #[allow(dead_code)]
     pub fn evolve(&mut self, new_form: &str) -> bool {
-        if self.level >= 30 { 
+        if self.level >= 30 {
             self.name = new_form.to_string();
             self.max_hp += 20;
             self.hp = self.max_hp;
@@ -138,21 +142,39 @@ impl Container {
     }
 
     pub fn display_status(&self) {
-        println!("{}", "=== Pokemon Container Status ===".bright_cyan());
-        println!("{}: {}", "ID".bright_green(), self.id);
-        println!("{}: {}", "Name".bright_green(), self.name);
-        println!("{}: {}", "Namespace".bright_green(), self.namespace);
-        println!("{}: {}", "State".bright_green(), format!("{:?}", self.state).bright_yellow());
-        println!("{}: {}", "Level".bright_green(), self.level);
-        println!("{}: {}/{}", "HP".bright_green(), self.hp, self.max_hp);
-        println!("{}: {}", "Type".bright_green(), self.pokemon_type.to_string().bright_magenta());
-        println!("{}: {}", "Moves".bright_green(), self.moves.len());
-        println!("{}: {}/{}", "EXP".bright_green(), self.exp, self.exp_to_next_level);
-        println!("{}", "=== Resource Usage ===".bright_cyan());
-        println!("{}: {:.1}%", "CPU".bright_green(), (self.resources.current_cpu / self.resources.cpu_limit) * 100.0);
-        println!("{}: {:.1}%", "Memory".bright_green(), (self.resources.current_memory as f64 / self.resources.memory_limit as f64) * 100.0);
-        println!("{}: {:.1}%", "Storage".bright_green(), (self.resources.current_storage as f64 / self.resources.storage_limit as f64) * 100.0);
-        println!("{}", "=====================".bright_cyan());
+        println!(
+            "{}",
+            "╔════════════════════════════════════════════╗".bright_cyan()
+        );
+        println!(
+            "{}",
+            format!(
+                "║   🧩 Pokémon Container Status: {:<12} ║",
+                self.name.bright_yellow().bold()
+            )
+            .bright_cyan()
+            .bold()
+        );
+        println!(
+            "{}",
+            "╠════════════════════════════════════════════╣".bright_cyan()
+        );
+        println!(
+            "║ ID:      {:<32} ║\n\
+             ║ State:   {:<32} ║\n\
+             ║ Level:   {:<32} ║\n\
+             ║ HP:      {:<32} ║\n\
+             ║ Type:    {:<32} ║",
+            self.id.bright_white(),
+            format!("{:?}", self.state).bright_green(),
+            self.level,
+            format!("{}/{}", self.hp, self.max_hp),
+            self.pokemon_type.to_string().bright_magenta()
+        );
+        println!(
+            "{}",
+            "╚════════════════════════════════════════════╝".bright_cyan()
+        );
     }
 }
 
@@ -167,7 +189,7 @@ impl ContainerManager {
     pub fn new() -> Self {
         let db = Database::new().expect("Failed to create database");
         let mut namespaces = HashMap::new();
-        
+
         // Load existing namespaces from database
         if let Ok(existing_namespaces) = db.get_namespaces() {
             for namespace in existing_namespaces {
@@ -201,7 +223,17 @@ impl ContainerManager {
         }
     }
 
-    pub fn summon(&mut self, namespace: &str, name: &str, level: u8, hp: u16, attack: u16, defense: u16, speed: u16, pokemon_type: PokemonType) -> bool {
+    pub fn summon(
+        &mut self,
+        namespace: &str,
+        name: &str,
+        level: u8,
+        hp: u16,
+        attack: u16,
+        defense: u16,
+        speed: u16,
+        pokemon_type: PokemonType,
+    ) -> bool {
         if !self.namespaces.contains_key(namespace) {
             return false;
         }
@@ -216,7 +248,7 @@ impl ContainerManager {
             speed as u32,
             pokemon_type,
         );
-        
+
         // Save to database
         if let Err(_) = self.db.save_pokemon(&container) {
             return false;
@@ -224,7 +256,7 @@ impl ContainerManager {
 
         // Update trainer stats
         self.trainer_stats.total_pokemon_caught += 1;
-        
+
         true
     }
 
@@ -264,6 +296,7 @@ impl ContainerManager {
         self.containers.get_mut(id)
     }
 
+    #[allow(dead_code)]
     pub fn list_containers(&self, namespace: Option<&str>) {
         println!("{}", "=== Pokemon Containers ===".bright_cyan());
         for (id, container) in &self.containers {
@@ -272,7 +305,8 @@ impl ContainerManager {
                     continue;
                 }
             }
-            println!("{}: {} ({})", 
+            println!(
+                "{}: {} ({})",
                 id.bright_green(),
                 container.name.bright_yellow(),
                 format!("{:?}", container.state).bright_magenta()
@@ -293,7 +327,10 @@ impl ContainerManager {
         match (p1, p2) {
             (Some(mut p1), Some(mut p2)) => {
                 if p1.state != ContainerState::Running || p2.state != ContainerState::Running {
-                    println!("{}", "⚠️ Both Pokemon must be running to battle!".bright_red());
+                    println!(
+                        "{}",
+                        "⚠️ Both Pokemon must be running to battle!".bright_red()
+                    );
                     self.containers.insert(id1.to_string(), p1);
                     self.containers.insert(id2.to_string(), p2);
                     return false;
@@ -344,14 +381,45 @@ impl ContainerManager {
     pub fn list_all_from_db() -> Result<(), rusqlite::Error> {
         let db = Database::new()?;
         let pokemons = db.load_all_pokemon()?;
-        println!("=== Pokemon Containers ===");
-        for pokemon in pokemons {
+        println!(
+            "{}",
+            "╔════════════════════════════════════════════════════════╗".bright_blue()
+        );
+        println!(
+            "{}",
+            "║            🗃️  Pokémon Containers List             ║"
+                .bright_blue()
+                .bold()
+        );
+        println!(
+            "{}",
+            "╠════════════════════════════════════════════════════════╣".bright_blue()
+        );
+        if pokemons.is_empty() {
             println!(
-                "{} (Level: {}, HP: {}, State: {:?})",
-                pokemon.name, pokemon.level, pokemon.hp, pokemon.state
+                "{}",
+                "║        No Pokémon containers found!                 ║".bright_red()
             );
+        } else {
+            for pokemon in pokemons {
+                println!(
+                    "{}",
+                    format!(
+                        "║ {:<12} | Lv.{:<2} | HP:{:<3} | Type:{:<10} | State:{:<8} ║",
+                        pokemon.name.bright_yellow(),
+                        pokemon.level,
+                        pokemon.hp,
+                        pokemon.pokemon_type.to_string().bright_magenta(),
+                        format!("{:?}", pokemon.state).bright_green()
+                    )
+                    .bold()
+                );
+            }
         }
-        println!("=====================");
+        println!(
+            "{}",
+            "╚════════════════════════════════════════════════════════╝".bright_blue()
+        );
         Ok(())
     }
 }

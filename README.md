@@ -1,135 +1,166 @@
-# 🎮 OxideBox
+# 🧪 OxideBox
 
-A modern, high-performance Pokémon battle simulator written in Rust, featuring SQLite persistence and a command-line interface.
+**OxideBox** is a command-line Pokémon container and battle simulator written in Rust. It lets you create, manage, and battle Pokémon, all with persistent storage using SQLite. Think of it as a blend of Pokémon and Docker—Pokémon are "containers" you can summon, pause, start, stop, and battle, all from your terminal.
 
-## 📖 Overview
+---
 
-OxideBox is a command-line application that simulates Pokémon battles with a focus on performance and data persistence. It uses SQLite for storing Pokémon data and battle statistics, making it perfect for tracking your training progress over time.
+## What Is This Project?
 
-## ⚡ Features
+- **Pokémon as Containers:** Each Pokémon is managed like a container, with its own stats, moves, and state (Created, Running, Paused, Stopped).
+- **Battle System:** Simulate turn-based Pokémon battles, including type effectiveness and move usage.
+- **Persistent Storage:** All Pokémon and their stats are saved in a local SQLite database.
+- **Namespaces:** Organize your Pokémon into different groups (namespaces) for better management.
+- **Trainer Stats:** Track your overall progress, wins, losses, and more.
 
-### Core Systems
-- **Namespace Management**: Organize your Pokémon in isolated environments
-- **Battle System**: Turn-based battles with type effectiveness
-- **Stats Tracking**: Comprehensive battle and trainer statistics
-- **Database Integration**: Persistent storage using SQLite
-- **Resource Management**: CPU, memory, and storage monitoring for each Pokémon
+---
 
-### Pokémon Management
-- Create and manage multiple Pokémon with custom stats
-- Support for all 18 Pokémon types
-- Up to 4 moves per Pokémon
-- Experience and leveling system
-- Container-like state management (Created, Running, Paused, Stopped)
+## Features
 
-## 🚀 Getting Started
+- **Create and manage Pokémon** with custom stats and up to 4 moves.
+- **Battle** between any two "Running" Pokémon.
+- **Save/load** Pokémon to/from the database.
+- **View detailed stats** for both trainers and Pokémon.
+- **Organize Pokémon** using namespaces.
+- **Modern, colorful CLI output** for a fun experience.
 
-### Prerequisites
-- Rust (latest stable version)
-- SQLite3
+---
 
-### Installation
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/oxidebox.git
-cd oxidebox
-```
+## How To Use
 
-2. Build the project:
+### 1. **Build the Project**
+
 ```bash
 cargo build --release
 ```
 
-## 🎮 Usage Guide
+### 2. **Run Commands**
 
-### Namespace Management
-Create isolated environments for your Pokémon:
-```bash
-cargo run -- create-namespace <name>
-cargo run -- delete-namespace <name>
-```
+All commands are run with `cargo run -- <command> [args]`.
 
-### Pokémon Management
-1. Summon a new Pokémon:
-```bash
-cargo run -- summon <namespace> <name> <level> <hp> <attack> <defense> <speed> <type>
-```
-Example:
-```bash
-cargo run -- summon trainer1 Pikachu 5 100 55 40 90 Electric
-```
+#### **Namespace Management**
 
-2. Container Management:
-```bash
-cargo run -- start <id>     # Start a Pokémon container
-cargo run -- stop <id>      # Stop a Pokémon container
-cargo run -- pause <id>     # Pause a Pokémon container
-```
+- **Create a namespace:**
+  ```bash
+  cargo run -- create-namespace <name>
+  ```
+- **Delete a namespace:**
+  ```bash
+  cargo run -- delete-namespace <name>
+  ```
 
-3. View Status:
-```bash
-cargo run -- status <id>    # View detailed Pokémon status
-cargo run -- list [namespace]  # List all Pokémon (optionally filtered by namespace)
-```
+#### **Pokémon Management**
 
-### Battle System
-Start a battle between two Pokémon:
-```bash
-cargo run -- battle <id1> <id2>
-```
-Note: Both Pokémon must be in the "Running" state to battle.
+- **Summon a Pokémon:**
+  ```bash
+  cargo run -- summon <namespace> <name> <level> <hp> <attack> <defense> <speed> <type>
+  ```
+  Example:
+  ```bash
+  cargo run -- summon myteam Pikachu 5 100 55 40 90 Electric
+  ```
 
-### Data Persistence
-Save and load Pokémon data:
-```bash
-cargo run -- save <id>      # Save a Pokémon to the database
-cargo run -- load <id>      # Load a Pokémon from the database
-```
+- **Start, Stop, Pause a Pokémon container:**
+  ```bash
+  cargo run -- start <id>
+  cargo run -- stop <id>
+  cargo run -- pause <id>
+  ```
 
-### Statistics
-View trainer statistics:
-```bash
-cargo run -- stats
-```
+- **List all Pokémon (optionally by namespace):**
+  ```bash
+  cargo run -- list
+  cargo run -- list <namespace>
+  ```
 
-## 📊 Data Structure
+- **View Pokémon status:**
+  ```bash
+  cargo run -- status <id>
+  ```
 
-### Pokémon Stats
-- Level (u8)
-- HP (u16)
-- Attack (u16)
-- Defense (u16)
-- Speed (u16)
-- Type (PokemonType enum)
-- Experience points
-- Moves (up to 4)
+#### **Battling**
 
-### Move Properties
-- Name
-- Power
-- Accuracy
-- PP (Power Points)
-- Type
-- Description
+- **Battle two Pokémon (both must be Running):**
+  ```bash
+  cargo run -- battle <id1> <id2>
+  ```
 
-### Container Resources
-- CPU usage limit
-- Memory limit
-- Storage limit
-- Current resource usage tracking
+#### **Persistence**
 
-## 🔧 Technical Details
+- **Save a Pokémon to the database:**
+  ```bash
+  cargo run -- save <id>
+  ```
+- **Load a Pokémon from the database:**
+  ```bash
+  cargo run -- load <id>
+  ```
 
-### Database Schema
-- `namespaces`: Stores namespace information
-- `pokemon`: Stores Pokémon data with foreign key to namespaces
-- `moves`: Stores move data with foreign key to pokemon
+#### **Trainer Stats**
 
-### State Management
-Pokémon containers can be in the following states:
-- Created
-- Running
-- Paused
-- Stopped
+- **View your overall stats:**
+  ```bash
+  cargo run -- stats
+  ```
 
-Thank You....
+---
+
+## How Does It Work?
+
+- **Pokémon are containers:** Each has stats, moves, and a state.
+- **Namespaces:** Like folders for your Pokémon.
+- **Battle system:** Turn-based, with random move selection and type effectiveness.
+- **Database:** All data is stored in `pokemon.db` (SQLite).
+- **Colorful output:** Uses the `colored` crate for a modern CLI feel.
+
+---
+
+## What’s Done (as of now)?
+
+- [x] Pokémon container creation and management
+- [x] Namespaces for organization
+- [x] Persistent storage with SQLite
+- [x] Turn-based battle system
+- [x] Trainer and Pokémon stats tracking
+- [x] Colorful, user-friendly CLI output
+- [x] Save/load Pokémon
+- [x] List and status commands
+
+---
+
+## What’s Not Done / Limitations
+
+- No graphical UI (CLI only)
+- No online multiplayer
+- No real Pokémon sprites or sound
+- Only basic move and type logic (not all Pokémon mechanics)
+
+---
+
+## Learning & Extending
+
+- **To learn:** Read the code in `src/`—it’s modular and commented.
+- **To extend:** Add new commands in `cli.rs` and `main.rs`. Add new Pokémon types or moves in `moves.rs`.
+- **To reset:** Just delete `pokemon.db` to start fresh.
+
+---
+
+## Requirements
+
+- Rust (latest stable)
+- SQLite3 (for the database)
+
+---
+
+## Why?
+
+This project is for learning Rust, database integration, and CLI design—while having fun with Pokémon concepts!
+
+---
+
+## License
+
+MIT
+
+---
+
+**Have fun training and battling your Pokémon—OxideBox style!**

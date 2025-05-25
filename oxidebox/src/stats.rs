@@ -40,6 +40,7 @@ impl PokemonStats {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct TimeBasedStats {
     pub daily_catches: u32,
@@ -49,10 +50,13 @@ pub struct TimeBasedStats {
 
 #[derive(Debug)]
 pub struct TrainerStats {
+    #[allow(dead_code)]
     pub pokemon_stats: HashMap<String, PokemonStats>,
+    #[allow(dead_code)]
     pub battle_history: Vec<BattleRecord>,
     pub total_pokemon_caught: u32,
     pub total_pokemon_released: u32,
+    #[allow(dead_code)]
     pub start_date: DateTime<Utc>,
     pub total_battles: u32,
     pub total_wins: u32,
@@ -60,6 +64,7 @@ pub struct TrainerStats {
     pub favorite_pokemon_type: String,
     pub most_used_move: String,
     pub total_exp_gained: u32,
+    #[allow(dead_code)]
     pub time_based_stats: TimeBasedStats,
     pub daily_catches: u32,
     pub weekly_wins: u32,
@@ -111,14 +116,17 @@ impl TrainerStats {
         println!("{}", "=====================".bright_cyan());
     }
 
+    #[allow(dead_code)]
     pub fn add_daily_catch(&mut self) {
         self.daily_catches += 1;
     }
 
+    #[allow(dead_code)]
     pub fn add_weekly_win(&mut self) {
         self.weekly_wins += 1;
     }
 
+    #[allow(dead_code)]
     pub fn add_monthly_exp(&mut self, exp: u32) {
         self.monthly_exp += exp;
     }

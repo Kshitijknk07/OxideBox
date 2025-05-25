@@ -1,17 +1,33 @@
-
-
 use crate::container::ContainerManager;
 use crate::team::TeamManager;
 
 pub enum Command {
-    Summon { name: String, level: u32, hp: u32 },
-    Recall { name: String },
-    Release { name: String },
-    CreateTeam { team_name: String },
-    AddToTeam { team_name: String, container_name: String },
-    RemoveFromTeam { team_name: String, container_name: String },
+    Summon {
+        name: String,
+        level: u32,
+        hp: u32,
+    },
+    Recall {
+        name: String,
+    },
+    Release {
+        name: String,
+    },
+    CreateTeam {
+        team_name: String,
+    },
+    AddToTeam {
+        team_name: String,
+        container_name: String,
+    },
+    RemoveFromTeam {
+        team_name: String,
+        container_name: String,
+    },
     Pokedex,
-    TeamInfo { team_name: String },
+    TeamInfo {
+        team_name: String,
+    },
 }
 
 pub struct CommandHandler {
@@ -41,17 +57,29 @@ impl CommandHandler {
             Command::CreateTeam { team_name } => {
                 self.team_manager.create_team(&team_name);
             }
-            Command::AddToTeam { team_name, container_name } => {
-                self.team_manager.add_to_team(&team_name, &container_name, &self.container_manager.containers);
+            Command::AddToTeam {
+                team_name,
+                container_name,
+            } => {
+                self.team_manager.add_to_team(
+                    &team_name,
+                    &container_name,
+                    &self.container_manager.containers,
+                );
             }
-            Command::RemoveFromTeam { team_name, container_name } => {
-                self.team_manager.remove_from_team(&team_name, &container_name);
+            Command::RemoveFromTeam {
+                team_name,
+                container_name,
+            } => {
+                self.team_manager
+                    .remove_from_team(&team_name, &container_name);
             }
             Command::Pokedex => {
                 self.container_manager.pokedex();
             }
             Command::TeamInfo { team_name } => {
-                self.team_manager.team_info(&team_name, &self.container_manager.containers);
+                self.team_manager
+                    .team_info(&team_name, &self.container_manager.containers);
             }
         }
     }
