@@ -176,7 +176,7 @@ impl Database {
 
         if let Some(mut container) = pokemon {
             let mut stmt = self.conn.prepare(
-                "SELECT name, power, accuracy, pp, pokemon_type, description
+                "SELECT m.name, m.power, m.accuracy, m.pp, m.pokemon_type, m.description
                  FROM moves m
                  JOIN pokemon p ON m.pokemon_id = p.id
                  WHERE p.id = ?1",
@@ -225,6 +225,20 @@ impl Database {
         } else {
             Ok(None)
         }
+    }
+
+    pub fn load_all_pokemon(&self) -> Result<Vec<Container>, rusqlite::Error> {
+        let mut stmt = self.conn.prepare("SELECT id FROM pokemon")?;
+        let ids = stmt.query_map([], |row| row.get::<_, i64>(0))?;
+        let mut containers = Vec::new();
+        for id_result in ids {
+            let id: i64 = id_result?;
+            let id_str = id.to_string();
+            if let Some(container) = self.load_pokemon(&id_str)? {
+                containers.push(container);
+            }
+        }
+        Ok(containers)
     }
 
     // pub fn backup_database(&self, backup_path: &str) -> Result<()> {

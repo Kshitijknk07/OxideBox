@@ -340,4 +340,18 @@ impl ContainerManager {
     pub fn display_stats(&self) {
         self.trainer_stats.display_detailed_stats();
     }
+
+    pub fn list_all_from_db() -> Result<(), rusqlite::Error> {
+        let db = Database::new()?;
+        let pokemons = db.load_all_pokemon()?;
+        println!("=== Pokemon Containers ===");
+        for pokemon in pokemons {
+            println!(
+                "{} (Level: {}, HP: {}, State: {:?})",
+                pokemon.name, pokemon.level, pokemon.hp, pokemon.state
+            );
+        }
+        println!("=====================");
+        Ok(())
+    }
 }

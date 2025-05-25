@@ -61,7 +61,9 @@ fn main() {
             }
         }
         Commands::List { namespace } => {
-            container_manager.list_containers(namespace.as_deref());
+            if let Err(e) = ContainerManager::list_all_from_db() {
+                eprintln!("Error listing containers: {}", e);
+            }
         }
         Commands::Status { id } => {
             if let Some(container) = container_manager.get_container(&id) {
