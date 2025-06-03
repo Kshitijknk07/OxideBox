@@ -76,8 +76,8 @@ impl TeamManager {
             for container_name in team {
                 if let Some(container) = containers.get(container_name) {
                     println!(
-                        "Pokémon: {} | Level: {} | HP: {} | Status: {}",
-                        container.name, container.level, container.hp, container.status
+                        "Pokémon: {} | Level: {} | HP: {} | Status: {:?}",
+                        container.name, container.level, container.hp, container.stats
                     );
                 } else {
                     println!("⚠️ Pokémon {} not found!", container_name);

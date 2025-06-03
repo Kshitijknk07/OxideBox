@@ -1,85 +1,88 @@
+use crate::cli::Commands;
 use crate::container::ContainerManager;
+use crate::evolution::EvolutionManager;
 use crate::team::TeamManager;
-
-pub enum Command {
-    Summon {
-        name: String,
-        level: u32,
-        hp: u32,
-    },
-    Recall {
-        name: String,
-    },
-    Release {
-        name: String,
-    },
-    CreateTeam {
-        team_name: String,
-    },
-    AddToTeam {
-        team_name: String,
-        container_name: String,
-    },
-    RemoveFromTeam {
-        team_name: String,
-        container_name: String,
-    },
-    Pokedex,
-    TeamInfo {
-        team_name: String,
-    },
-}
 
 pub struct CommandHandler {
     container_manager: ContainerManager,
+    evolution_manager: EvolutionManager,
     team_manager: TeamManager,
 }
 
 impl CommandHandler {
-    pub fn new(container_manager: ContainerManager, team_manager: TeamManager) -> Self {
-        CommandHandler {
-            container_manager,
-            team_manager,
+    pub fn new() -> Self {
+        Self {
+            container_manager: ContainerManager::new(),
+            evolution_manager: EvolutionManager::new(),
+            team_manager: TeamManager::new(),
         }
     }
 
-    pub fn handle_command(&mut self, command: Command) {
+    pub fn handle_command(&mut self, command: Commands) {
         match command {
-            Command::Summon { name, level, hp } => {
-                self.container_manager.summon(&name, level, hp);
-            }
-            Command::Recall { name } => {
-                self.container_manager.recall(&name);
-            }
-            Command::Release { name } => {
-                self.container_manager.release(&name);
-            }
-            Command::CreateTeam { team_name } => {
-                self.team_manager.create_team(&team_name);
-            }
-            Command::AddToTeam {
-                team_name,
-                container_name,
+            Commands::Summon {
+                namespace,
+                name,
+                level,
+                hp,
+                attack,
+                defense,
+                speed,
+                pokemon_type,
             } => {
-                self.team_manager.add_to_team(
-                    &team_name,
-                    &container_name,
-                    &self.container_manager.containers,
+                self.container_manager.summon(
+                    &namespace,
+                    &name,
+                    level,
+                    hp,
+                    attack,
+                    defense,
+                    speed,
+                    pokemon_type,
                 );
             }
-            Command::RemoveFromTeam {
-                team_name,
-                container_name,
-            } => {
-                self.team_manager
-                    .remove_from_team(&team_name, &container_name);
+            Commands::Start { id } => {
+                self.container_manager.start_container(&id);
             }
-            Command::Pokedex => {
-                self.container_manager.pokedex();
+            Commands::Stop { id } => {
+                self.container_manager.stop_container(&id);
             }
-            Command::TeamInfo { team_name } => {
-                self.team_manager
-                    .team_info(&team_name, &self.container_manager.containers);
+            Commands::Pause { id } => {
+                self.container_manager.pause_container(&id);
+            }
+            Commands::List { namespace } => {
+                if let Some(ns) = namespace {
+                    self.container_manager.list_containers(Some(ns.as_str()));
+                } else {
+                    self.container_manager.list_containers(None);
+                }
+            }
+            Commands::Status { id } => {
+                if let Some(container) = self.container_manager.get_container(&id) {
+                    container.display_status();
+                }
+            }
+            Commands::Battle { id1, id2 } => {
+                self.container_manager.battle(&id1, &id2, &self.evolution_manager);
+            }
+            Commands::Save { id } => {
+                if let Err(e) = self.container_manager.save_to_db(&id) {
+                    eprintln!("Error saving container: {}", e);
+                }
+            }
+            Commands::Load { id } => {
+                if let Err(e) = self.container_manager.load_from_db(&id) {
+                    eprintln!("Error loading container: {}", e);
+                }
+            }
+            Commands::Stats => {
+                self.container_manager.display_stats();
+            }
+            Commands::CreateNamespace { name } => {
+                self.container_manager.create_namespace(&name);
+            }
+            Commands::DeleteNamespace { name } => {
+                self.container_manager.delete_namespace(&name);
             }
         }
     }

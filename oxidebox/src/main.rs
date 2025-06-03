@@ -2,6 +2,11 @@ mod cli;
 mod container;
 mod evolution;
 mod stats;
+mod moves;
+mod battle;
+mod database;
+mod team;
+mod command;
 
 use crate::cli::{Cli, Commands};
 use crate::container::ContainerManager;

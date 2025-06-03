@@ -3,6 +3,7 @@ use crate::evolution::EvolutionManager;
 use crate::stats::BattleRecord;
 use chrono::Utc;
 use rand::Rng;
+use colored::Colorize;
 
 pub struct Battle;
 
