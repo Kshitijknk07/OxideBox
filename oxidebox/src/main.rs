@@ -7,10 +7,12 @@ mod battle;
 mod database;
 mod team;
 mod command;
+mod challenge;
 
 use crate::cli::{Cli, Commands};
 use crate::container::ContainerManager;
 use crate::evolution::EvolutionManager;
+use crate::challenge::ChallengeManager;
 use clap::Parser;
 use colored::*;
 
@@ -18,6 +20,8 @@ fn main() {
     let cli = Cli::parse();
     let mut container_manager = ContainerManager::new();
     let evolution_manager = EvolutionManager::new();
+    let mut challenge_manager = ChallengeManager::new();
+    challenge_manager.generate_daily_challenges();
 
     match cli.command {
         Commands::CreateNamespace { name } => {
@@ -66,6 +70,7 @@ fn main() {
                 speed,
                 pokemon_type,
             ) {
+                challenge_manager.update_challenge_progress(crate::challenge::ChallengeType::CatchPokemon, 1);
                 println!(
                     "{}",
                     format!(
@@ -126,6 +131,8 @@ fn main() {
         }
         Commands::Battle { id1, id2 } => {
             if container_manager.battle(&id1, &id2, &evolution_manager) {
+                challenge_manager.update_challenge_progress(crate::challenge::ChallengeType::BattleWin, 1);
+                challenge_manager.update_challenge_progress(crate::challenge::ChallengeType::UseMoves, 2);
                 println!("{}", "⚔️ Battle completed!".bright_green());
             } else {
                 println!("{}", "⚠️ Battle failed!".bright_red());
@@ -147,6 +154,26 @@ fn main() {
         },
         Commands::Stats => {
             container_manager.display_stats();
+        }
+        Commands::Challenges => {
+            challenge_manager.check_daily_reset();
+            challenge_manager.display_challenges();
+        }
+        Commands::ClaimReward { challenge_id } => {
+            if let Some(challenge) = challenge_manager.active_challenges.get(&challenge_id) {
+                if challenge.completed {
+                    println!("{}", format!("🎁 Claimed rewards for challenge: {}", challenge.description).bright_green());
+                    println!("{}", format!("Received: {} EXP, {}", 
+                        challenge.reward_exp,
+                        challenge.reward_items.join(", ")
+                    ).bright_yellow());
+                    container_manager.trainer_stats.total_exp_gained += challenge.reward_exp;
+                } else {
+                    println!("{}", "⚠️ Challenge not completed yet!".bright_red());
+                }
+            } else {
+                println!("{}", "⚠️ Challenge not found!".bright_red());
+            }
         }
     }
 }

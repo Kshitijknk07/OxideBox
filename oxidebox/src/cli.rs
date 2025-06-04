@@ -52,4 +52,8 @@ pub enum Commands {
         id: String,
     },
     Stats,
+    Challenges,
+    ClaimReward {
+        challenge_id: String,
+    },
 }

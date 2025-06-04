@@ -11,6 +11,7 @@
 - **Persistent Storage:** All Pokémon and their stats are saved in a local SQLite database.
 - **Namespaces:** Organize your Pokémon into different groups (namespaces) for better management.
 - **Trainer Stats:** Track your overall progress, wins, losses, and more.
+- **Daily Challenges:** Complete daily tasks to earn rewards and track your progress.
 
 ---
 
@@ -22,6 +23,7 @@
 - **View detailed stats** for both trainers and Pokémon.
 - **Organize Pokémon** using namespaces.
 - **Modern, colorful CLI output** for a fun experience.
+- **Daily Challenges** with rewards and progress tracking.
 
 ---
 
@@ -102,6 +104,33 @@ All commands are run with `cargo run -- <command> [args]`.
   cargo run -- stats
   ```
 
+#### **Daily Challenges**
+
+- **View current daily challenges:**
+  ```bash
+  cargo run -- challenges
+  ```
+  This will show:
+  - Current active challenges
+  - Progress bars for each challenge
+  - Rewards for completing challenges
+  - Time remaining until reset
+
+- **Claim rewards for completed challenges:**
+  ```bash
+  cargo run -- claim-reward <challenge_id>
+  ```
+
+##### Challenge Types
+- **Battle Wins:** Win a certain number of battles
+- **Pokémon Catches:** Catch new Pokémon
+- **Move Usage:** Use moves in battles
+
+##### Rewards
+- Experience Points (EXP)
+- Items (Rare Candy, Poké Balls, PP Up, etc.)
+- Progress tracking for trainer stats
+
 ---
 
 ## How Does It Work?
@@ -111,10 +140,11 @@ All commands are run with `cargo run -- <command> [args]`.
 - **Battle system:** Turn-based, with random move selection and type effectiveness.
 - **Database:** All data is stored in `pokemon.db` (SQLite).
 - **Colorful output:** Uses the `colored` crate for a modern CLI feel.
+- **Daily Challenges:** Automatically generated and reset every 24 hours.
 
 ---
 
-## What’s Done (as of now)?
+## What's Done (as of now)?
 
 - [x] Pokémon container creation and management
 - [x] Namespaces for organization
@@ -124,21 +154,15 @@ All commands are run with `cargo run -- <command> [args]`.
 - [x] Colorful, user-friendly CLI output
 - [x] Save/load Pokémon
 - [x] List and status commands
-
----
-
-## What’s Not Done / Limitations
-
-- No graphical UI (CLI only)
-- No online multiplayer
-- No real Pokémon sprites or sound
-- Only basic move and type logic (not all Pokémon mechanics)
+- [x] Daily challenge system with rewards
+- [x] Progress tracking for challenges
+- [x] Automatic challenge reset
 
 ---
 
 ## Learning & Extending
 
-- **To learn:** Read the code in `src/`—it’s modular and commented.
+- **To learn:** Read the code in `src/`—it's modular and commented.
 - **To extend:** Add new commands in `cli.rs` and `main.rs`. Add new Pokémon types or moves in `moves.rs`.
 - **To reset:** Just delete `pokemon.db` to start fresh.
 
